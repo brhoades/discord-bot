@@ -43,10 +43,12 @@ end
 
 bot.message_delete do |event|
   channel = bot.find_channel("logs")[0]
-  return if $ignore.include?(event.id)
+  if $ignore.include?(event.id)
+    return
+  end
 
   if $messages.has_key?(event.id)
-    if $messages[event.id].has_key?(:content)
+    if $messages[event.id].has_key?(:content) and event.channel.name.to_s == "logs"
       bot.send_message event.channel.id, $messages[event.id][:content]
     else
       bot.send_message channel.id, "A message by #{$messages[event.id][:user]} was deleted in ##{event.channel.name}"
