@@ -4,8 +4,9 @@ require_relative 'gta.rb'
 
 # https://discordapp.com/oauth2/authorize?client_id=251052745790849026&scope=bot&permissions=70282304
 $ignore = []
+$messages = {}
 
-bot = Discordrb::Bot.new token: ENV["BOT_TOKEN"], client_id: 251052745790849027
+bot = Discordrb::Bot.new token: ENV["BOT_TOKEN"], client_id: 251052745790849027, parse_self: true
 Giphy::Configuration.configure do |config|
   config.api_key = "dc6zaTOxFJmzC"
 end
@@ -42,8 +43,27 @@ end
 
 bot.message_delete do |event|
   channel = bot.find_channel("logs")[0]
-  if !$ignore.include?(event.id)
+  return if $ignore.include?(event.id)
+
+  if $messages.has_key?(event.id)
+    if $messages[event.id].has_key?(:content)
+      bot.send_message event.channel.id, $messages[event.id][:content]
+    else
+      bot.send_message channel.id, "A message by #{$messages[event.id][:user]} was deleted in ##{event.channel.name}"
+    end
+  else
     bot.send_message channel.id, "A message was deleted in ##{event.channel.name}"
+  end
+end
+
+bot.message do |event|
+  $messages[event.message.id] = {
+    user: event.message.author.username.to_s,
+    timestamp: event.timestamp
+  }
+
+  if event.message.author.username == bot.profile.username
+    $messages[event.message.id][:content] = event.message.content.to_s
   end
 end
 
