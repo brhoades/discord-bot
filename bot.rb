@@ -21,25 +21,30 @@ bot.message(contains: /^[!\/]giphy/) do |event|
   message = event.message.to_s.split(/ /)
   message.delete_at 0
   $ignore << event.message.id
+  author = event.message.author
+  if author.nick
+    author = author.nick.to_s
+  else
+    author = author.username.to_s
+  end
+  event.message.delete
 
   if message.length == 0
-    event.message.delete
-    return event.respond Giphy.random().url
+    event.respond(Giphy.random().url.to_s + " (#{author})")
+    return
   end
 
   results = Giphy.random(message.join(" "))
   if results
-    event.message.delete
-    event.respond results.url
-  else
-    event.message.delete
+    event.respond(results.url.to_s + " (#{author})")
   end
 end
 
 bot.message_delete do |event|
   channel = bot.find_channel("logs")[0]
-  return if $ignore.include? event.id
-  bot.send_message channel.id, "A message was deleted in ##{event.channel.name}"
+  if !$ignore.include?(event.id)
+    bot.send_message channel.id, "A message was deleted in ##{event.channel.name}"
+  end
 end
 
 bot.run
