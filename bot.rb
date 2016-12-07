@@ -19,26 +19,30 @@ bot.message(with_text: 'gta') do |event|
 end
 
 bot.message(contains: /^[!\/]giphy/) do |event|
-  message = event.message.to_s.split(/ /)
+  original = event.message.to_s
+  message = original.split(/ /)
   message.delete_at 0
   $ignore << event.message.id
   author = event.message.author
+
   if author.nick
     author = author.nick.to_s
   else
     author = author.username.to_s
   end
   event.message.delete
+  url = ""
 
   if message.length == 0
-    event.respond(Giphy.random().url.to_s + " (#{author})")
-    return
+    url = Giphy.random().url.to_s
+  else
+    results = Giphy.random(message.join(" "))
+    if results
+      url = results.url.to_s
+    end
   end
 
-  results = Giphy.random(message.join(" "))
-  if results
-    event.respond(results.url.to_s + " (#{author})")
-  end
+  event.respond("#{author}: #{original}\n#{url}")
 end
 
 bot.message_delete do |event|
