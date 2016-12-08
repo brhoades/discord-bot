@@ -1,22 +1,15 @@
 require 'discordrb'
-require 'giphy'
-require_relative 'gta.rb'
+require 'net/http'
+require 'json'
+
+# current_path = File.expand_path("../", __FILE__)
+# Dir["#{current_path}/**/*.rb"].each { |file| require file }
 
 # https://discordapp.com/oauth2/authorize?client_id=251052745790849026&scope=bot&permissions=70282304
 $ignore = []
 $messages = {}
 
 bot = Discordrb::Bot.new token: ENV["BOT_TOKEN"], client_id: 251052745790849027, parse_self: true
-Giphy::Configuration.configure do |config|
-  config.api_key = "dc6zaTOxFJmzC"
-end
-
-bot.message(with_text: 'Ping!') do |event|
-  event.respond 'Pong!'
-end
-
-bot.message(with_text: 'gta') do |event|
-end
 
 bot.message(contains: /^[!\/]giphy/) do |event|
   original = event.message.to_s
@@ -31,18 +24,15 @@ bot.message(contains: /^[!\/]giphy/) do |event|
     author = author.username.to_s
   end
   event.message.delete
-  url = ""
 
-  if message.length == 0
-    url = Giphy.random().url.to_s
-  else
-    results = Giphy.random(message.join(" "))
-    if results
-      url = results.url.to_s
-    end
+  url = URI("http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&rating=pg-13&q=#{message.join("+")}")
+  response = JSON.parse(Net::HTTP.get(url))
+  if response["data"].has_key?('url')
+    url = response["data"]["url"]
+    event.respond("#{author}: #{original}\n#{url}")
   end
-
-  event.respond("#{author}: #{original}\n#{url}")
+ 
+  url = result.url.to_s
 end
 
 bot.message_delete do |event|
@@ -53,12 +43,12 @@ bot.message_delete do |event|
 
   if $messages.has_key?(event.id)
     if $messages[event.id].has_key?(:content) and event.channel.name.to_s == "logs"
-      bot.send_message event.channel.id, $messages[event.id][:content]
+      bot.send_message(event.channel.id, $messages[event.id][:content])
     else
-      bot.send_message channel.id, "A message by #{$messages[event.id][:user]} was deleted in ##{event.channel.name}"
+      bot.send_message(channel.id, "A message by #{$messages[event.id][:user]} was deleted in ##{event.channel.name}")
     end
   else
-    bot.send_message channel.id, "A message was deleted in ##{event.channel.name}"
+    bot.send_message(channel.id, "A message was deleted in ##{event.channel.name}")
   end
 end
 
