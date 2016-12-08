@@ -25,14 +25,12 @@ bot.message(contains: /^[!\/]giphy/) do |event|
   end
   event.message.delete
 
-  url = URI("http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&rating=pg-13&q=#{message.join("+")}")
+  url = URI("http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&rating=pg-13&tag=#{message.join("+")}")
   response = JSON.parse(Net::HTTP.get(url))
   if response["data"].has_key?('url')
     url = response["data"]["url"]
     event.respond("#{author}: #{original}\n#{url}")
   end
- 
-  url = result.url.to_s
 end
 
 bot.message_delete do |event|
