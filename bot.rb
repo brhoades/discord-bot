@@ -13,6 +13,7 @@ bot = Discordrb::Bot.new token: ENV["BOT_TOKEN"], client_id: 251052745790849027,
 
 bot.message(contains: /^[!\/]giphy/) do |event|
   original = event.message.to_s
+  original.gsub! /\&/, ""
   message = original.split(/ /)
   message.delete_at 0
   $ignore << event.message.id
