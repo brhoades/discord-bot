@@ -2,7 +2,7 @@ class BotFeature
   def register_handlers(bot, scheduler)
   end
 
-  def load
+  def load(bot)
   end
 
   def before_run

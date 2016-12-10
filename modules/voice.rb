@@ -8,6 +8,19 @@ $QUEUE_SIZE = 3
 
 # Announce users joining and leaving channels.
 class VoiceFeatures < BotFeature
+  def load(bot)
+    config = bot.get_config_for_module(__FILE__)
+    puts config
+    @config = {
+      cache: true,
+      cache_directory: "/tmp/"
+    }
+
+    config.each do |k, v|
+      @config[k.to_sym] = config[k] if @config.has_key? k.to_sym
+    end
+  end
+
   def register_handlers(bot, scheduler)
     bot.voice_state_update do |event|
       process_voice_state(bot, event.server, event.channel, event.user)
@@ -37,6 +50,10 @@ class VoiceFeatures < BotFeature
       voice_bot.play_file message[:file]
       voice_bot.stop_playing  # if we don't stop playing, even though play_file is blocking, playing?
                               # will continue to return true.
+
+      if !@config[:cache]
+        `rm #{message[:file]}`
+      end
     end
   end
 
@@ -44,8 +61,13 @@ class VoiceFeatures < BotFeature
   # TODO: make cache optional and give it a sub directory.
   def send_message(bot, server, channel, message)
     name = Digest::SHA256.hexdigest message
-    file = "/tmp/#{name}"
-    if !File.exists? "#{file}.txt" or !File.exists? "#{file}.mp3"
+    if !Dir.exists?(@config[:cache_directory])
+      `mkdir -p #{@config[:cache_directory]}`
+    end
+
+    file = File.join(@config[:cache_directory], "#{name}")
+
+    if !File.exists?("#{file}.mp3")
       File.write("#{file}.txt", message)
       `perl simple-google-tts/speak.pl en "#{file}.txt" "#{file}.mp3"`
       `rm #{file}.txt`
