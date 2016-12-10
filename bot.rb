@@ -5,7 +5,6 @@ require 'rufus-scheduler'
 require_relative 'bot-feature.rb'
 
 # https://discordapp.com/oauth2/authorize?client_id=251052745790849026&scope=bot&permissions=70282304
-$messages = {}
 $voice = {}
 $voice_queue = {}
 $QUEUE_SIZE = 3
@@ -94,31 +93,6 @@ scheduler.every '1s' do
   handle_message bot if $voice_queue.size > 0
 end
 
-bot.message_delete do |event|
-  channel = bot.find_channel("logs")[0]
-  next if $ignore.include?(event.id)
-
-  if $messages.has_key?(event.id)
-    if $messages[event.id].has_key?(:content) and event.channel.name.to_s == "logs"
-      bot.send_message(event.channel.id, $messages[event.id][:content])
-    else
-      bot.send_message(channel.id, "A message by #{$messages[event.id][:user]} was deleted in ##{event.channel.name}")
-    end
-  else
-    bot.send_message(channel.id, "A message was deleted in ##{event.channel.name}")
-  end
-end
-
-bot.message do |event|
-  $messages[event.message.id] = {
-    user: event.message.author.username.to_s,
-    timestamp: event.timestamp
-  }
-
-  if event.message.author.username == bot.profile.username
-    $messages[event.message.id][:content] = event.message.content.to_s
-  end
-end
 
 bot.voice_state_update do |event|
   process_voice_state(bot, event.server, event.channel, event.user)

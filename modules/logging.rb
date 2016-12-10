@@ -1,0 +1,38 @@
+$messages = {}
+
+class LoggingFeature < BotFeature
+  def register_schedules(scheduler)
+  end
+
+  def register_bot_handlers(bot)
+    bot.message_delete do |event|
+      channel = bot.find_channel("logs")[0]
+      next if $ignore.include?(event.id)
+
+      if $messages.has_key?(event.id)
+        if $messages[event.id].has_key?(:content) and event.channel.name.to_s == "logs"
+          bot.send_message(event.channel.id, $messages[event.id][:content])
+        else
+          bot.send_message(channel.id, "A message by #{$messages[event.id][:user]} was deleted in ##{event.channel.name}")
+        end
+      else
+        bot.send_message(channel.id, "A message was deleted in ##{event.channel.name}")
+      end
+    end
+
+    bot.message do |event|
+      $messages[event.message.id] = {
+        user: event.message.author.username.to_s,
+        timestamp: event.timestamp
+      }
+
+      if event.message.author.username == bot.profile.username
+        $messages[event.message.id][:content] = event.message.content.to_s
+      end
+    end
+  end
+
+  def self.descendants
+    ObjectSpace.each_object(Class).select { |klass| klass < self }
+  end
+end
