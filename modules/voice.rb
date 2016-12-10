@@ -4,16 +4,15 @@ require_relative '../bot-feature.rb'
 
 $voice = {}
 $voice_queue = {}
+$QUEUE_SIZE = 3
 
 # Announce users joining and leaving channels.
 class VoiceFeatures < BotFeature
-  def register_bot_handlers(bot)
+  def register_handlers(bot, scheduler)
     bot.voice_state_update do |event|
       process_voice_state(bot, event.server, event.channel, event.user)
     end
-  end
 
-  def register_schedules(bot, scheduler)
     scheduler.every '1s' do
       process_voice_queue bot if $voice_queue.size > 0
     end

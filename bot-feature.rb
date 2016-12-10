@@ -1,8 +1,11 @@
 class BotFeature
-  def register_schedules(bot, scheduler)
+  def register_handlers(bot, scheduler)
   end
 
-  def register_bot_handlers(bot)
+  def load
+  end
+
+  def before_run
   end
 
   def self.descendants

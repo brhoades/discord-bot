@@ -5,7 +5,7 @@ require_relative '../bot-feature.rb'
 $ignore = []
 
 class GiphyFeature < BotFeature
-  def register_bot_handlers(bot)
+  def register_handlers(bot, scheduler)
     bot.message(contains: /^[!\/]giphy/) do |event|
       event.respond get_random_url(event.message)
     end

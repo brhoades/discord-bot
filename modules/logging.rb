@@ -3,7 +3,7 @@ require_relative '../bot-feature.rb'
 $messages = {}
 
 class LoggingFeature < BotFeature
-  def register_bot_handlers(bot)
+  def register_handlers(bot, scheduler)
     bot.message_delete do |event|
       channel = bot.find_channel("logs")[0]
       next if $ignore.include?(event.id)
