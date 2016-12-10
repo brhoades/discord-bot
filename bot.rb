@@ -2,6 +2,7 @@ require 'discordrb'
 require 'net/http'
 require 'json'
 require 'digest'
+require 'rufus-scheduler'
 
 # current_path = File.expand_path("../", __FILE__)
 # Dir["#{current_path}/**/*.rb"].each { |file| require file }
@@ -10,9 +11,28 @@ require 'digest'
 $ignore = []
 $messages = {}
 $voice = {}
+$voice_queue = {}
+$QUEUE_SIZE = 3
+
+
+def handle_message bot
+  return if $voice_queue.size == 0
+  $voice_queue.each do |k,v|
+    next if v.size == 0
+    voice_bot = nil
+    if bot.voices.has_key? k.id
+      voice_bot = bot.voices[k.id]
+    end
+    return if voice_bot and voice_bot.playing?
+  
+    message = v.pop
+    voice_bot = bot.voice_connect message[:channel]
+    voice_bot.play_file message[:file]
+    voice_bot.stop_playing
+  end
+end
 
 def send_message(bot, server, channel, message)
-  voice_bot = bot.voice_connect channel
   name = Digest::SHA256.hexdigest message
   file = "/tmp/#{name}"
   if !File.exists? "#{file}.txt" or !File.exists? "#{file}.mp3"
@@ -20,7 +40,14 @@ def send_message(bot, server, channel, message)
     `perl simple-google-tts/speak.pl en "#{file}.txt" "#{file}.mp3"`
   end
 
-  voice_bot.play_io File.open("#{file}.mp3")
+  if !$voice_queue.has_key? server
+    $voice_queue[server] = SizedQueue.new($QUEUE_SIZE)
+  end
+
+  $voice_queue[server] << {
+    file: "#{file}.mp3",
+    channel: channel
+  }
 end
 
 def process_voice_state(bot, server, channel, user)
@@ -34,19 +61,12 @@ def process_voice_state(bot, server, channel, user)
     $voice[server][channel] = []
   end
 
-  if channel
-    puts user.username, channel.name
-  else
-    puts user.username, " left"
-  end
-
   $voice[server].each do |k,v|
     if v.include? user and k != channel
       v.delete user
-      if $voice[server].size > 0
+      if v.size > 0
         # notify users, this isn't just an initial load.
         send_message bot, server, k, "#{user.username} left"
-        puts user.username, " left"
       end
     end
   end
@@ -55,12 +75,16 @@ def process_voice_state(bot, server, channel, user)
     $voice[server][channel] << user
     if $voice[server][channel].length > 0 
       send_message bot, server, channel, "#{user.username} joined"
-      puts user.username, channel.name
     end
    end
 end
 
 bot = Discordrb::Bot.new token: ENV["BOT_TOKEN"], client_id: 251052745790849027, parse_self: true
+scheduler = Rufus::Scheduler.new
+
+scheduler.every '1s' do
+  handle_message bot if $voice_queue.size > 0
+end
 
 bot.message(contains: /^[!\/]giphy/) do |event|
   original = event.message.to_s
