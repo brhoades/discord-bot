@@ -15,7 +15,7 @@ def send_message(bot, server, channel, message)
   voice_bot = bot.voice_connect channel
   name = Digest::SHA256.hexdigest message
   file = "/tmp/#{name}"
-  if !File.exists? "#{file}.txt" and !File.exists? "#{file}.mp3"
+  if !File.exists? "#{file}.txt" or !File.exists? "#{file}.mp3"
     File.write("#{file}.txt", message)
     `perl simple-google-tts/speak.pl en "#{file}.txt" "#{file}.mp3"`
   end
