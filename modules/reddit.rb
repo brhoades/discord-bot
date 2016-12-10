@@ -1,3 +1,5 @@
+require_relative '../bot-feature.rb'
+
 class RedditFeature < BotFeature
   def register_bot_handlers(bot)
     bot.message(contains: /m\.reddit\.com/) do |event|

@@ -1,5 +1,5 @@
 class BotFeature
-  def register_schedules(scheduler)
+  def register_schedules(bot, scheduler)
   end
 
   def register_bot_handlers(bot)

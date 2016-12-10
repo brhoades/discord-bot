@@ -1,9 +1,8 @@
+require_relative '../bot-feature.rb'
+
 $messages = {}
 
 class LoggingFeature < BotFeature
-  def register_schedules(scheduler)
-  end
-
   def register_bot_handlers(bot)
     bot.message_delete do |event|
       channel = bot.find_channel("logs")[0]
