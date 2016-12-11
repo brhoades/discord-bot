@@ -10,7 +10,6 @@ $QUEUE_SIZE = 3
 class VoiceFeatures < BotFeature
   def load(bot)
     config = bot.get_config_for_module(__FILE__)
-    puts config
     @config = {
       cache: true,
       cache_directory: "/tmp/"

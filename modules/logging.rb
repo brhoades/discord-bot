@@ -5,8 +5,14 @@ $messages = {}
 class LoggingFeature < BotFeature
   def register_handlers(bot, scheduler)
     bot.message_delete do |event|
-      channel = bot.find_channel("logs")[0]
       next if $ignore.include?(event.id)
+      channel = bot.find_channel("logs", event.channel.server.name)
+
+      if channel.size == 0
+        puts "#logs not found on #{event.channel.server.name}."
+        next
+      end
+      channel = channel[0]
 
       if $messages.has_key?(event.id)
         if $messages[event.id].has_key?(:content) and event.channel.name.to_s == "logs"
