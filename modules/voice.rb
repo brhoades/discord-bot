@@ -72,9 +72,11 @@ class VoiceFeatures < BotFeature
       `rm #{file}.txt`
     end
 
-    if !$voice_queue.has_key? server
-      $voice_queue[server] = SizedQueue.new($QUEUE_SIZE)
+    if !$voice_queue.has_key?(server)
+      $voice_queue[server] = Queue.new
     end
+
+    return if $voice_queue[server].length >= $QUEUE_SIZE
 
     $voice_queue[server] << {
       file: "#{file}.mp3",

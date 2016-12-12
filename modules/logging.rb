@@ -5,7 +5,7 @@ $messages = {}
 class LoggingFeature < BotFeature
   def register_handlers(bot, scheduler)
     bot.message_delete do |event|
-      next if $ignore.include?(event.id)
+      next if $ignore.include?(event.message.id)
       channel = bot.find_channel("logs", event.channel.server.name)
 
       if channel.size == 0
