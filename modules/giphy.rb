@@ -13,7 +13,8 @@ class GiphyFeature < BotFeature
       author = event.message.author.username
       $giphys[author] = {
         message: event.respond(response),
-        original: event.message.to_s
+        original: event.message.to_s,
+        rerolls: 0
       }
 
       event.message.delete
@@ -26,14 +27,16 @@ class GiphyFeature < BotFeature
       if $giphys.has_key? author
         response = get_random_url($giphys[author][:original], author)
         $giphys[author][:message].delete
-        $giphys[author][:message] = event.respond(get_random_url($giphys[author][:original], author, event.channel.name =~ /giphy_nsfw/))
+        $giphys[author][:rerolls] += 1
+        message = get_random_url($giphys[author][:original], author, event.channel.name =~ /giphy_nsfw/, extra="(rerolls: #{$giphys[author][:rerolls]})")
+        $giphys[author][:message] = event.respond(message)
       end
     end
   end
 
   private
 
-  def get_random_url(event_message, author, nsfw=false)
+  def get_random_url(event_message, author, nsfw=false, extra="")
     original = event_message.to_s
     original.gsub! /\&/, ""
     message = original.split(/ /)
@@ -51,7 +54,7 @@ class GiphyFeature < BotFeature
     if response["data"] and response["data"].is_a? Hash
       if response["data"].has_key?('url')
         url = response["data"]["url"]
-        "#{author}: #{original}\n#{url}"
+        "#{author}: #{original} #{extra}\n#{url}"
       end
     else
       "#{author}: #{original} (**no matches**)"
