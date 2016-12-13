@@ -26,6 +26,7 @@ class GiphyFeature < BotFeature
       event.message.delete
       if $giphys.has_key? author
         response = get_random_url($giphys[author][:original], author)
+        $ignore << $giphys[author][:message].id
         $giphys[author][:message].delete
         $giphys[author][:rerolls] += 1
         message = get_random_url($giphys[author][:original], author, event.channel.name =~ /giphy_nsfw/, extra="(rerolls: #{$giphys[author][:rerolls]})")
