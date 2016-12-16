@@ -12,14 +12,23 @@ class ForecastFeature < BotFeature
     end
 
     Geocoder.configure(api_key: ENV['GMAPS_API_KEY'])
+    @location_cache = {}
   end
 
   def register_handlers(bot, scheduler)
     bot.message(contains: /\!forecast/) do |event|
       parts = event.message.to_s.split(/ /)
       parts.delete_at 0
+      query = parts.join(' ')
+      res = nil
 
-      res = Geocoder.search(parts.join(' '))
+      if @location_cache.has_key? query
+        res = @location_cache[query]
+      else
+        res = Geocoder.search(query)
+        @location_cache[query] = res
+      end
+
       if res.length == 0
         event.respond("Unknown location")
         next
@@ -39,7 +48,10 @@ class ForecastFeature < BotFeature
       response = %{Forecast for #{location.formatted_address}: 
 __Temp__: #{current["temperature"]}F\
 #{" (feels like #{current["apparentTemperature"]}F)." if current["temperature"] != current["apparentTemperature"]} \
-__Low__: #{day["temperatureMin"]}F | __High__: #{day["temperatureMax"]}F | __Humidity__: #{current["humidity"]*100}% | __Wind__: #{current["windSpeed"]} mph
+__Low__: #{day["temperatureMin"]}F \
+| __High__: #{day["temperatureMax"]}F \
+| __Humidity__: #{current["humidity"]*100}% \
+| __Wind__: #{current["windSpeed"]} mph
 
 Currently #{minute["summary"].downcase.gsub(/\./, '')} with #{hour["summary"].downcase}
 #{forecast["daily"]["summary"]}\n}
