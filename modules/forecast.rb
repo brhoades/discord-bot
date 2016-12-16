@@ -29,23 +29,26 @@ class ForecastFeature < BotFeature
       end
 
       location = res[0]
-      puts location
-      
       forecast = ForecastIO.forecast(location.latitude, location.longitude)
-      puts forecast["minutely"]["summary"]
 
-      response = \
-"""
-Forecast for #{location.formatted_address}:
+      current = forecast["currently"]
+      minute = forecast["minutely"]
+      hour = forecast["hourly"]
+      day = forecast["daily"]["data"][0]
 
-Currently #{forecast["minutely"]["summary"].downcase.gsub(/./, '')} with #{forecast["hourly"]["summary"].downcase}
-#{forecast["daily"]["summary"]}
-"""
+      response = %{Forecast for #{location.formatted_address}: 
+__Temp__: #{current["temperature"]}F\
+#{" (feels like #{current["apparentTemperature"]}F)." if current["temperature"] != current["apparentTemperature"]} \
+__Low__: #{day["temperatureMin"]}F | __High__: #{day["temperatureMax"]}F | __Humidity__: #{current["humidity"]*100}% | __Wind__: #{current["windSpeed"]} mph
+
+Currently #{minute["summary"].downcase.gsub(/\./, '')} with #{hour["summary"].downcase}
+#{forecast["daily"]["summary"]}\n}
+
 
       forecast["alerts"].each do |alert|
         delta = alert["expires"].to_i - alert["time"].to_i
         from_now = ChronicDuration.output(delta, :format => :long)
-        response += "**#{alert["title"]} expires in #{from_now}.**"
+        response += "**#{alert["title"]} expires in #{from_now}.**\n"
       end
 
       event.respond(response)
