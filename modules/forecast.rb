@@ -6,7 +6,17 @@ require_relative '../bot-feature.rb'
 
 #TODO: Put keys in config
 class ForecastFeature < BotFeature
-  def initialize
+
+  def load(bot)
+    config = bot.get_config_for_module(__FILE__)
+    @config = {
+      "tracked_user": "",
+      "gta_user": "",
+      "gta_pass": ""
+    }
+
+    bot.map_config(config, @config)
+
     ForecastIO.configure do |configuration|
       configuration.api_key = ENV['FORECAST_KEY']
     end
@@ -67,10 +77,12 @@ Currently #{minute["summary"].downcase.gsub(/\./, '')} with #{hour["summary"].do
 #{forecast["daily"]["summary"]}\n}
 
 
-      forecast["alerts"].each do |alert|
-        delta = alert["expires"].to_i - alert["time"].to_i
-        from_now = ChronicDuration.output(delta, :format => :long)
-        response += "**#{alert["title"]} expires in #{from_now}.**\n"
+      if forecast.has_key?("alerts") and forecast["alerts"].length
+        forecast["alerts"].each do |alert|
+          delta = alert["expires"].to_i - alert["time"].to_i
+          from_now = ChronicDuration.output(delta, :format => :long)
+          response += "**#{alert["title"]} expires in #{from_now}.**\n"
+        end
       end
 
       event.respond(response)
