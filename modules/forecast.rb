@@ -4,29 +4,28 @@ require 'chronic_duration'
 
 require_relative '../bot-feature.rb'
 
-#TODO: Put keys in config
 class ForecastFeature < BotFeature
-
   def load(bot)
     config = bot.get_config_for_module(__FILE__)
     @config = {
-      "tracked_user": "",
-      "gta_user": "",
-      "gta_pass": ""
+      "forecast_io_key": "",
+      "gmaps_api_key": ""
     }
 
     bot.map_config(config, @config)
 
     ForecastIO.configure do |configuration|
-      configuration.api_key = ENV['FORECAST_KEY']
+      configuration.api_key = @config[:forecast_io_key]
     end
 
-    Geocoder.configure(api_key: ENV['GMAPS_API_KEY'])
+    Geocoder.configure(api_key: @config[:gmaps_api_key])
+
     @location_cache = {}
   end
 
   def register_handlers(bot, scheduler)
     bot.message(contains: /\!forecast/) do |event|
+      next if @config[:forecast_io_key] == "" or @config[:gmaps_api_key] == ""
       parts = event.message.to_s.split(/ /)
       parts.delete_at 0
       query = parts.join(' ')
