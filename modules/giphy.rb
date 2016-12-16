@@ -3,15 +3,18 @@ require 'json'
 require_relative '../bot-feature.rb'
 
 $ignore = []
-$giphys = {}
 
 class GiphyFeature < BotFeature
+  def initialize
+    @giphys = {}
+  end
+
   def register_handlers(bot, scheduler)
     bot.message(contains: /^[!\/]giphy/) do |event|
       $ignore << event.message.id
       response = get_random_url(event.message, event.message.author.username, event.channel.name =~ /giphy_nsfw/)
       author = event.message.author.username
-      $giphys[author] = {
+      @giphys[author] = {
         message: event.respond(response),
         original: event.message.to_s,
         rerolls: 0
@@ -24,13 +27,13 @@ class GiphyFeature < BotFeature
       $ignore << event.message.id
       author = event.message.author.username
       event.message.delete
-      if $giphys.has_key? author
-        response = get_random_url($giphys[author][:original], author)
-        $ignore << $giphys[author][:message].id
-        $giphys[author][:message].delete
-        $giphys[author][:rerolls] += 1
-        message = get_random_url($giphys[author][:original], author, event.channel.name =~ /giphy_nsfw/, extra="(rerolls: #{$giphys[author][:rerolls]})")
-        $giphys[author][:message] = event.respond(message)
+      if @giphys.has_key? author
+        response = get_random_url(@giphys[author][:original], author)
+        $ignore << @giphys[author][:message].id
+        @giphys[author][:message].delete
+        @giphys[author][:rerolls] += 1
+        message = get_random_url(@giphys[author][:original], author, event.channel.name =~ /giphy_nsfw/, extra="(rerolls: #{@giphys[author][:rerolls]})")
+        @giphys[author][:message] = event.respond(message)
       end
     end
   end
