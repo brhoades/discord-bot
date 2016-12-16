@@ -33,7 +33,12 @@ class ForecastFeature < BotFeature
         event.respond("Unknown location")
         next
       elsif res.length > 1
-        event.respond("Ambiguous location.")
+        response = "Ambiguous location, matches:"
+        res.each do |loc|
+          response += "\n    #{loc.formatted_address}"
+        end
+
+        event.respond(response)
         next
       end
 
