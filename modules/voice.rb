@@ -15,9 +15,7 @@ class VoiceFeatures < BotFeature
       cache_directory: "/tmp/"
     }
 
-    config.each do |k, v|
-      @config[k.to_sym] = config[k] if @config.has_key? k.to_sym
-    end
+    bot.map_config(config, @config)
   end
 
   def register_handlers(bot, scheduler)

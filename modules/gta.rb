@@ -1,4 +1,3 @@
-require 'mechanize'
 require 'capybara'
 require 'capybara/poltergeist'
 require 'capybara/dsl'
@@ -7,7 +6,16 @@ require 'nokogiri'
 require_relative '../bot-feature.rb'
 
 class GTATrackerFeature < BotFeature
-  def initialize
+  def load(bot)
+    config = bot.get_config_for_module(__FILE__)
+    @config = {
+      "tracked_user": "",
+      "gta_user": "",
+      "gta_pass": ""
+    }
+
+    bot.map_config(config, @config)
+
     @last_tracked = {
       in_game: nil,
       timestamp: nil,
@@ -18,21 +26,27 @@ class GTATrackerFeature < BotFeature
     Capybara.run_server = false
     Capybara.current_driver = :poltergeist
     Capybara.ignore_hidden_elements = false
-    # Capybara.app_host = 'http://soc'
 
     Capybara.register_driver :poltergeist do |app|
-      Capybara::Poltergeist::Driver.new(app, {js_errors: false, cookies: true, window_size: [1920, 1080]})
+      Capybara::Poltergeist::Driver.new(app, {
+        js_errors: false,
+        cookies: true,
+        window_size: [1920, 1080]
+      })
     end
   end
 
   def register_handlers(bot, scheduler)
     bot.message(contains: /^[!\/]gta/) do |event|
-      event.respond pretty_message
+      if @config[:tracked_user] == "" or @config[:gta_pass] == "" or @config[:gta_user] == ""
+        event.respond "Not properly configured."
+      else
+        event.respond pretty_message
+      end
     end
 
     scheduler.every '100000000h' do
       next
-      print '.'
       results = scrape
       play_time = results[:Play_time]
       if @last_tracked[:in_game] != nil and @last_tracked[:in_game] != play_time
@@ -40,9 +54,8 @@ class GTATrackerFeature < BotFeature
           @last_tracked[:is_online] = true
           channels = bot.find_channel("general", "testing server")
           channels.each do |channel|
-            bot.send_message "FOUKEMONSTER IS ONLINE", channels
+            bot.send_message "#{@config["tracked_user"]} IS ONLINE", channels
           end
-          puts "FOUKEMONSTER IS ONLINE"
         end
       else
         @last_tracked[:is_online] = false
@@ -140,20 +153,19 @@ class GTATrackerFeature < BotFeature
         end
       end
 
-      def login
+      def login(config)
         begin
           # uri = URI('https://socialclub.rockstargames.com/profile/signin')
           # visit uri
           return if logged_in
-          puts "LOGGING IN"
           captcha_check
           # fill_in "login-field", with: ENV["GTA_USER"]
           # fill_in "password-field", with: ENV["GTA_PASS"]
           # check "rememberme-field"
           # click_on "Sign In"
           click_on "headerLoginButton"
-          fill_in "headLoginString", with: ENV["GTA_USER"]
-          fill_in "headLoginPassword", with: ENV["GTA_PASS"]
+          fill_in "headLoginString", with: config[:gta_user]
+          fill_in "headLoginPassword", with: config[:gta_pass]
           check "rememberme"
           begin
             find("button.btn:nth-child(3)").click
@@ -168,18 +180,18 @@ class GTATrackerFeature < BotFeature
         end
       end
 
-      def get_basic_statistics last_time=false
+      def get_basic_statistics(config, last_time=false)
         read_cookies(page.driver) if not last_time
         page.driver.add_header('User-Agent', 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2228.0 Safari/537.36', permanent: true)
         begin
-          uri = URI("https://socialclub.rockstargames.com/games/gtav/career/overviewAjax?character=Freemode&nickname=foukemonster&slot=Freemode&gamerHandle=&gamerTag=&_=1419694640015")
+          uri = URI("https://socialclub.rockstargames.com/games/gtav/career/overviewAjax?character=Freemode&nickname=#{config[:tracked_user]}&slot=Freemode&gamerHandle=&gamerTag=&_=1419694640015")
           visit uri
           find("#bank-value")
           return page.body
         rescue Capybara::ElementNotFound, Capybara::Ambiguous
           failed
           return if last_time
-          login
+          login config
           get_basic_statistics true
         end
       end
@@ -204,10 +216,7 @@ class GTATrackerFeature < BotFeature
           write_cookies page.driver.browser.cookies
           return
           name = page.save_screenshot
-          `scp #{name} aaron@i.brod.es:/var/www/images/`
-          basename = Pathname.new(name).basename
-          puts "http://i.brod.es/#{basename}"
-          `rm #{name}`
+          puts name
       end
       def logged_in
         begin
@@ -225,7 +234,7 @@ class GTATrackerFeature < BotFeature
   def scrape
     begin
       t = MyCapybaraTest::Test.new
-      statistics = t.get_basic_statistics
+      statistics = t.get_basic_statistics @config
       results = parse_page statistics
 
       #Sorry, but you made too many requests. Please check back in a short while to see if the restriction has been lifted.

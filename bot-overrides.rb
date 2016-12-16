@@ -19,4 +19,12 @@ class Discordrb::Bot
       {}
     end
   end
+
+  # Map our read config to our bot config. This allows us to avoid
+  # values that shouldn't be there and also keep defaults.
+  def map_config(read_config, bot_config)
+    read_config.each do |k, v|
+      bot_config[k.to_sym] = read_config[k] if bot_config.has_key? k.to_sym
+    end
+  end
 end
