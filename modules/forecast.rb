@@ -22,6 +22,11 @@ class ForecastFeature < BotFeature
       query = parts.join(' ')
       res = nil
 
+      if query =~ /^\s*$/
+        event.respond("No.")
+        next
+      end
+
       if @location_cache.has_key? query
         res = @location_cache[query]
       else
