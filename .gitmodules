@@ -1,0 +1,3 @@
+[submodule "simple-google-tts"]
+	path = simple-google-tts
+	url = https://github.com/Glutanimate/simple-google-tts
