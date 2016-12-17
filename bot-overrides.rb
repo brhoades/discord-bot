@@ -1,7 +1,11 @@
 require 'discordrb'
 require 'json'
+require 'sequel'
 
 class Discordrb::Bot
+  attr_accessor :db, :features
+
+  # the base directory of our bot... used to get config which is in /config from bot.rb.
   def get_base_directory
     File.expand_path(".")
   end
@@ -37,14 +41,41 @@ class Discordrb::Bot
     def new
       file = File.join(File.dirname(__FILE__), "config.json")
       options = nil
+      bot = nil
 
       if File.exists? file
         options = {}
         JSON.load(File.open(file)).map { |k, v| options[k.to_sym] = v }
-        self.old_new(options)
+        bot = self.old_new(options)
       else
         puts "\"#{file}\" is required but does not exist." and exit
       end
+
+      bot.load_features
+      bot.setup_database
+
+      bot
     end
+  end
+
+  def load_features
+    Dir["#{get_base_directory}/modules/**/*.rb"].map { |f| require f }
+    @features = []
+
+    BotFeature.descendants.each do |feature_class|
+      feature = feature_class.new
+      @features << feature
+
+      puts "Loaded Feature \"#{feature_class}\""
+    end
+  end
+
+  # Gets our database, assuming it has been set up properly.
+  def setup_database
+    Sequel.extension :migration
+    @db = Sequel.sqlite 'sqlite3.db'
+
+    puts "Applying migrations."
+    Sequel::Migrator.apply(@db, File.join(get_base_directory, "migrations"))
   end
 end

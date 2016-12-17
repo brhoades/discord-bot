@@ -4,29 +4,19 @@ require_relative 'bot-feature.rb'
 require_relative 'bot-overrides.rb'
 
 # https://discordapp.com/oauth2/authorize?client_id=251052745790849026&scope=bot&permissions=70282304
-$features = []
-
-current_path = File.expand_path(".")
-Dir["#{File.expand_path(".")}/modules/**/*.rb"].map { |f| require f }
-
-BotFeature.descendants.each do |feature_class|
-  feature = feature_class.new
-  $features << feature
-
-  puts "Loaded Feature \"#{feature_class}\""
-end
+features = []
 
 # bot = Discordrb::Bot.new token: ENV["BOT_TOKEN"], client_id: 251052745790849027, parse_self: true
 bot = Discordrb::Bot.new
 scheduler = Rufus::Scheduler.new
 
-$features.map { |f| f.load bot }
+bot.features.map { |f| f.load bot }
 
 # Load modules
 
-$features.map { |f| f.register_handlers(bot, scheduler) }
+bot.features.map { |f| f.register_handlers(bot, scheduler) }
 
-$features.map { |f| f.before_run }
+bot.features.map { |f| f.before_run }
 
 bot.run
 
