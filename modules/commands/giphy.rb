@@ -1,6 +1,6 @@
 require 'net/http'
 require 'json'
-require_relative '../bot-feature.rb'
+require_relative '../../bot-feature.rb'
 
 $ignore = []
 

@@ -2,7 +2,7 @@ require 'forecast_io'
 require 'geocoder'
 require 'chronic_duration'
 
-require_relative '../bot-feature.rb'
+require_relative '../../bot-feature.rb'
 
 class ForecastFeature < BotFeature
   def load(bot)

@@ -7,7 +7,7 @@ require_relative 'bot-overrides.rb'
 $features = []
 
 current_path = File.expand_path(".")
-Dir["#{File.expand_path(".")}/modules/*.rb"].map { |f| require f }
+Dir["#{File.expand_path(".")}/modules/**/*.rb"].map { |f| require f }
 
 BotFeature.descendants.each do |feature_class|
   feature = feature_class.new

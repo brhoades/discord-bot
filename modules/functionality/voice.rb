@@ -1,6 +1,6 @@
 require 'digest'
 
-require_relative '../bot-feature.rb'
+require_relative '../../bot-feature.rb'
 
 $voice = {}
 $voice_queue = {}

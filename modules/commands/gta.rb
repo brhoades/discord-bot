@@ -3,7 +3,7 @@ require 'capybara/poltergeist'
 require 'capybara/dsl'
 require 'pathname'
 require 'nokogiri'
-require_relative '../bot-feature.rb'
+require_relative '../../bot-feature.rb'
 
 class GTATrackerFeature < BotFeature
   def load(bot)

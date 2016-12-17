@@ -1,4 +1,4 @@
-require_relative '../bot-feature.rb'
+require_relative '../../bot-feature.rb'
 
 class RedditFeature < BotFeature
   def register_handlers(bot, scheduler)
