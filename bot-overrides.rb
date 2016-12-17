@@ -27,4 +27,24 @@ class Discordrb::Bot
       bot_config[k.to_sym] = read_config[k] if bot_config.has_key? k.to_sym
     end
   end
+
+  # Gross way to let us monkeypatch a class method.
+  class << self
+    alias_method :old_new, :new
+
+    # Load all of our options from config.json. This then overrides the real .new
+    # and calls the alias.
+    def new
+      file = File.join(File.dirname(__FILE__), "config.json")
+      options = nil
+
+      if File.exists? file
+        options = {}
+        JSON.load(File.open(file)).map { |k, v| options[k.to_sym] = v }
+        self.old_new(options)
+      else
+        puts "\"#{file}\" is required but does not exist." and exit
+      end
+    end
+  end
 end

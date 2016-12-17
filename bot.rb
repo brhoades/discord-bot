@@ -16,7 +16,8 @@ BotFeature.descendants.each do |feature_class|
   puts "Loaded Feature \"#{feature_class}\""
 end
 
-bot = Discordrb::Bot.new token: ENV["BOT_TOKEN"], client_id: 251052745790849027, parse_self: true
+# bot = Discordrb::Bot.new token: ENV["BOT_TOKEN"], client_id: 251052745790849027, parse_self: true
+bot = Discordrb::Bot.new
 scheduler = Rufus::Scheduler.new
 
 $features.map { |f| f.load bot }
@@ -31,6 +32,5 @@ bot.run
 
 puts "hello"
 
-#TODO: Add hooks for each command module. before_run after_run, etc.
 #TODO: store user stats... number of words, number of lines, images, links, most popular phrases, etc. STore it all.
 #TODO: Fix global madness.
