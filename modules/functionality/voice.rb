@@ -97,12 +97,14 @@ class VoiceFeatures < BotFeature
       $voice[server][channel] = []
     end
 
+    name = user.username.gsub /[0-9]+$/, ""
+
     $voice[server].each do |k,v|
       if v.include? user and k != channel
         v.delete user
         if v.size > 0
           # notify users, this isn't just an initial load.
-          send_message bot, server, k, "#{user.username} left"
+          send_message bot, server, k, "#{name} left"
         end
       end
     end
@@ -110,7 +112,7 @@ class VoiceFeatures < BotFeature
     if channel and !$voice[server][channel].include? user
       $voice[server][channel] << user
       if $voice[server][channel].length > 0 
-        send_message bot, server, channel, "#{user.username} joined"
+        send_message bot, server, channel, "#{name} joined"
       end
      end
   end
