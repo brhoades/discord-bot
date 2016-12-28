@@ -12,6 +12,9 @@ Class.new(Sequel::Migration) do
       boolean :ignore, default: false
       boolean :deleted, default: false
       boolean :edited, default: false
+
+      # Discord's id for this message
+      Integer :discord_id
     end
 
     create_table(:users) do
