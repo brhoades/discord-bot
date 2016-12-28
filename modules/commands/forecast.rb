@@ -24,7 +24,7 @@ class ForecastFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
-    bot.message(contains: /\!forecast/) do |event|
+    bot.message(contains: /\!(forecast|weather|w)/) do |event|
       next if @config[:forecast_io_key] == "" or @config[:gmaps_api_key] == ""
       parts = event.message.to_s.split(/ /)
       parts.delete_at 0
