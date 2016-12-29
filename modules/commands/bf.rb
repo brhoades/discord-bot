@@ -13,15 +13,27 @@ class BF1TrackerFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
-    bot.message(contains: /^[!\/]bf1?/) do |event|
+    bot.message(contains: /^[!\/]bf1? [A-Za-z0-9]+/) do |event|
       message = event.message.to_s.split(/ /)
       message.delete_at 0
       event.respond pretty_basic_statistics(message.join " ")
+    end
+
+    bot.message(contains: /^[!\/]bf1? -[A-Za-z]+ [A-Za-z0-9]+/) do |event|
+      message = event.message.to_s.split(/ /)
+      message.delete_at 0
+      sub = message[0]
+      message.delete_at 0
+
+      if sub =~ /kits?/
+        event.respond pretty_kit_statistics(message.join " ")
+      end
     end
   end
 
   private
 
+  # Does a rest query to bf1tracker for basic stats for a provided username.
   def get_basic_statistics(name)
     res = RestClient.get(
       "https://battlefieldtracker.com/bf1/api/Stats/BasicStats?platform=3&displayName=#{name}",
@@ -32,6 +44,18 @@ class BF1TrackerFeature < BotFeature
     JSON.load res.body
   end
 
+  # Does a rest query to bf1tracker for detailed stats for a provided username.
+  def get_detailed_statistics(name)
+    res = RestClient.get(
+      "https://battlefieldtracker.com/bf1/api/Stats/DetailedStats?platform=3&displayName=#{name}",
+      headers=@header)
+
+    return false if !res or res.code != 200
+
+    JSON.load res.body
+  end
+
+  # Grabs basic bf1tracker stats and returns a string summarizing them.
   def pretty_basic_statistics(name)
     response = get_basic_statistics(name)
     return "Not Found" if not response
@@ -41,8 +65,29 @@ class BF1TrackerFeature < BotFeature
     %{**#{response["profile"]["displayName"]}**
 *K/D*: #{result["kills"]}/#{result["deaths"]}\t*W/L*: #{result["wins"]}/#{result["losses"]}\t\
 *KPM*: #{result["kpm"]}
-*Time played*: #{ChronicDuration.output(result["timePlayed"], :format => :long)}
-#{result["rank"]["name"]} (#{result["rankProgress"]["current"].round(0)}/#{result["rankProgress"]["total"].round(0)} XP - #{(result["rankProgress"]["current"]/result["rankProgress"]["total"]*100).round(1)}%)\tTotal experience: #{total} (#{(total.to_f/@ranks[100]*100).round(2)}% max)}
+*Time played*: #{ChronicDuration.output(result["timePlayed"], :format => :long, :units => 3)}
+#{result["rank"]["name"]} (#{(result["rankProgress"]["current"]/result["rankProgress"]["total"]*100).round(1)}% to next rank)\t\
+#{total} XP (#{(total.to_f/@ranks[100]*100).round(2)}% to rank 100)}
+  end
+
+  # Grabs detailed bf1tracker statistics and returns stringified kit information.
+  def pretty_kit_statistics(name)
+    response = get_detailed_statistics(name)
+    return "Not Found" if not response
+
+    res = ["**#{response["profile"]["displayName"]}**", "", "```markdown"]
+    kits = response["result"]["kitStats"]
+    totalTime = kits.reduce(0) {|sum, kit| sum += kit["secondsAs"].to_i}
+    maxNameSize = kits.max { |a, b| a["name"].length <=> b["name"].length }["name"].length
+    maxKills = kits.max { |a, b| a["kills"].round(0).to_s.length <=> b["kills"].round(0).to_s.length }["kills"].round(0).to_s.length
+
+    kits.each do |kit|
+      res << "#{kit["name"].ljust(maxNameSize, ' ')}\tKills: #{kit["kills"].round(0).to_s.ljust(maxKills, ' ')} - Time as: #{ChronicDuration.output(kit["secondsAs"].to_i, :format => :long, :units => 2)} (#{(kit["secondsAs"].to_f/totalTime*100).round(0)}%)"
+    end
+
+    res << "```"
+
+    res.join "\n"
   end
 
   # Given someone's rank and their progress towards the next rank, return their total experience
