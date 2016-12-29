@@ -1,12 +1,9 @@
 require_relative '../../bot-feature.rb'
 
-class RedditFeature < BotFeature
+class RandomFeatures < BotFeature
   def register_handlers(bot, scheduler)
-    bot.message(contains: /m\.reddit\.com/) do |event|
-      message = event.message.to_s.gsub /m\.reddit\.com/, "reddit.com"
-      event.message.delete
-
-      event.respond "#{event.message.author.username}: #{message}"
+    bot.message(contains: /bee\w/) do |event|
+      event.respond "https://media.giphy.com/media/dcubXtnbck0RG/giphy.gif"
     end
   end
 end
