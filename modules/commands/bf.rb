@@ -76,7 +76,13 @@ class BF1TrackerFeature < BotFeature
     return "Not Found" if not response
 
     res = ["**#{response["profile"]["displayName"]}**", "", "```markdown"]
-    kits = response["result"]["kitStats"]
+    # TODO move vehicles and kit separate then join here.
+    response["result"]["vehicleStats"].each do |v|
+      # Alias vehicles so they match kits.
+      v["kills"] = v["killsAs"]
+      v["secondsAs"] = v["timeSpent"]
+    end
+    kits = response["result"]["kitStats"] + response["result"]["vehicleStats"]
     totalTime = kits.reduce(0) {|sum, kit| sum += kit["secondsAs"].to_i}
     maxNameSize = kits.max { |a, b| a["name"].length <=> b["name"].length }["name"].length
     maxKills = kits.max { |a, b| a["kills"].round(0).to_s.length <=> b["kills"].round(0).to_s.length }["kills"].round(0).to_s.length
