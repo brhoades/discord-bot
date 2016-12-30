@@ -51,6 +51,7 @@ class BF1TrackerFeature < BotFeature
 
   private
 
+  ##### Helper Methods
   # checks to be ran on all events, returns false if event should be skipped
   def handler_check(event)
     if not @enabled
@@ -61,12 +62,10 @@ class BF1TrackerFeature < BotFeature
     end
   end
 
-  # Does a rest query to bf1tracker for basic stats for a provided username.
-  def get_basic_statistics(name)
+  # Returns a JSON hash if a valid result was provided; otherwise returns a string.
+  def get_rest_api(path)
     begin
-      res = RestClient.get(
-        "https://battlefieldtracker.com/bf1/api/Stats/BasicStats?platform=3&displayName=#{name}",
-        headers=@header)
+      res = RestClient.get(path, headers=@header)
     rescue RestClient::BadRequest
       return "Unknown user"
     end
@@ -75,20 +74,16 @@ class BF1TrackerFeature < BotFeature
 
     JSON.load res.body
   end
+  ##### End helper methods
+
+  # Does a rest query to bf1tracker for basic stats for a provided username.
+  def get_basic_statistics(name)
+        get_rest_api("https://battlefieldtracker.com/bf1/api/Stats/BasicStats?platform=3&displayName=#{name}")
+  end
 
   # Does a rest query to bf1tracker for detailed stats for a provided username.
   def get_detailed_statistics(name)
-    begin
-      res = RestClient.get(
-        "https://battlefieldtracker.com/bf1/api/Stats/DetailedStats?platform=3&displayName=#{name}",
-        headers=@header)
-    rescue RestClient::BadRequest
-      return "Unknown user"
-    end
-
-    return "Unknown error" if !res or res.code != 200
-
-    JSON.load res.body
+    get_rest_api("https://battlefieldtracker.com/bf1/api/Stats/DetailedStats?platform=3&displayName=#{name}")
   end
 
   # Grabs basic bf1tracker stats and returns a string summarizing them.
