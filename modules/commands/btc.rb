@@ -83,6 +83,8 @@ class BTCFeature < BotFeature
         "https://apiv2.bitcoinaverage.com/frontend/global/history/BTCUSD?period=monthly"
       when "alltime"
         "https://apiv2.bitcoinaverage.com/frontend/global/history/BTCUSD?period=alltime"
+      when "now"
+        "https://apiv2.bitcoinaverage.com/frontend/constants/exchangerates/global"
     end
     uri = URI.parse(url)
 
@@ -163,10 +165,11 @@ BTC Help:
   end
 
   def output_value(event)
-    data = get_graph_data("daily").map { |v| v["average"] }
-    price = data.last
-    average = data.mean
-    stddev = data.standard_deviation
+    daily_data = get_graph_data("daily").map { |v| v["average"] }
+    now = get_graph_data("now")
+    price = (1 / now["rates"]["BTC"]["rate"].to_f).round(2)
+    average = daily_data.mean
+    stddev = daily_data.standard_deviation
     
     event.respond %{\
 BTC: $#{price}
