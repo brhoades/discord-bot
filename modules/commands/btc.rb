@@ -6,6 +6,26 @@ require 'tempfile'
 
 require_relative '../../bot-feature.rb'
 
+module Enumerable
+    def sum
+      self.inject(0){|accum, i| accum + i }
+    end
+
+    def mean
+      self.sum/self.length.to_f
+    end
+
+    def sample_variance
+      m = self.mean
+      sum = self.inject(0){|accum, i| accum +(i-m)**2 }
+      sum/(self.length - 1).to_f
+    end
+
+    def standard_deviation
+      return Math.sqrt(self.sample_variance)
+    end
+end 
+
 class BTCFeature < BotFeature
   def load(bot)
     config = bot.get_config_for_module(__FILE__)
@@ -18,14 +38,33 @@ class BTCFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
-    bot.message(contains: /\!(btc|bitcoin)/) do |event|
-      type = "daily"
-      daily = get_graph_data type
+    bot.message(contains: /^\!(btc|bitcoin)/) do |event|
+      parts = event.message.to_s.split(/\s+/)
+      parts.delete_at 0
+      if parts.size == 0
+        output_value event
+        next
+      end
+      if parts[0] == "help"
+        output_help event
+        next
+      elsif parts[0] == "day"
+        parts[0] = "daily"
+      elsif parts[0] == "month"
+        parts[0] = "monthly"
+      elsif parts[0] != "daily" and parts[0] != "monthly" and parts[0] != "alltime"
+        event.respond "Unknown timespan."
+        output_help event
+        next
+      end
+
+      type = parts[0]
+      data = get_graph_data type
       file = Tempfile.new ['graph', '.png']
       file.close
 
       begin
-        build_graph("BTC in USD Value today", type, file, daily)
+        build_graph(get_title(type), type, file, data)
         file.open
         event.channel.send_file(file)
       ensure
@@ -54,6 +93,17 @@ class BTCFeature < BotFeature
     JSON.load response.body
   end
 
+  def get_title(unit)
+    case unit
+      when "daily"
+        "BTC Last Day"
+      when "monthly"
+        "BTC Last Month"
+      when "alltime"
+        "BTC All Time"
+    end
+  end
+
 
   # Build a graph and write it to the passed file
   def build_graph(title, unit, file, data)
@@ -62,6 +112,10 @@ class BTCFeature < BotFeature
     labels = {}
     values = []
     number = 10 - 1
+
+    if unit == "monthly"
+      number -= 2
+    end
 
     massage_dates data, unit
 
@@ -76,12 +130,9 @@ class BTCFeature < BotFeature
     labels[data.size-1] = data.last["time"]
 
     graph.labels = labels
-    graph.data values
+    graph.data "BTC ($)", values
 
-    all = [file.path, "/tmp/test.png"]
-    all.each do |l|
-      graph.write(l)
-    end
+    graph.write(file.path)
   end
 
   # Put dates into a unit-appropriate format
@@ -90,10 +141,36 @@ class BTCFeature < BotFeature
 
     if unit == "daily"
       format = "%H:%M"
+    elsif unit == "monthly"
+      format = "%m/%d/%y"
+    elsif unit == "alltime"
+      format = "%m/%y"
     end
 
     data.each do |v|
       v["time"] = DateTime.parse(v["time"]).strftime(format)
     end
+  end
+
+  def output_help(event)
+    event.respond %{
+BTC Help:
+  !btc: Display current btc value with statistics.
+  !btc day/daily: Show the BTC price graphed for the last day.
+  !btc month/monthly: Show the BTC price graphed for the last month.
+  !btc alltime: show the BTC price graphed since records start.\
+}
+  end
+
+  def output_value(event)
+    data = get_graph_data("daily").map { |v| v["average"] }
+    price = data.last
+    average = data.mean
+    stddev = data.standard_deviation
+    
+    event.respond %{\
+BTC: $#{price}
+BTC daily avg/stddev: $#{average.round(2)} / $#{stddev.round(2)}
+}
   end
 end
