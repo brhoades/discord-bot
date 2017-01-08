@@ -4,6 +4,7 @@ require 'sequel'
 
 class Discordrb::Bot
   attr_accessor :db, :features
+  alias_method :old_message, :message
 
   # the base directory of our bot... used to get config which is in /config from bot.rb.
   def get_base_directory
@@ -58,6 +59,7 @@ class Discordrb::Bot
     end
   end
 
+  # Loads all features and prints out messages for them.
   def load_features
     Dir["#{get_base_directory}/modules/**/*.rb"].map { |f| require f }
     @features = []
@@ -77,5 +79,22 @@ class Discordrb::Bot
 
     puts "Applying migrations."
     Sequel::Migrator.apply(@db, File.join(get_base_directory, "migrations"))
+  end
+
+  # Override message to simply wrap it and report back errors to the channel.
+  def message(attributes = {}, &block)
+    old_message(attributes) do |event|
+      begin
+        block.call event
+      rescue Exception => e
+        message = ""
+        if attributes.has_key?(:caller)
+          message = " in module #{self.name}"
+        end
+
+        event.respond %{Error#{message}: ```#{e.to_s}
+#{e.backtrace.join("\n")}```}
+      end
+    end
   end
 end
