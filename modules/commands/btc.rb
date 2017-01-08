@@ -116,7 +116,7 @@ class BTCFeature < BotFeature
     response = http.get(uri.request_uri)
 
     data = JSON.load response.body
-    if unit == "alltime"
+    if unit != "now"
       data.reverse
     else
       data
