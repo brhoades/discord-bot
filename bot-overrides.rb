@@ -89,7 +89,7 @@ class Discordrb::Bot
       rescue Exception => e
         message = ""
         if attributes.has_key?(:caller)
-          message = " in module #{self.name}"
+          message = " in module #{attributes[:caller]}"
         end
 
         event.respond %{Error#{message}: ```#{e.to_s}

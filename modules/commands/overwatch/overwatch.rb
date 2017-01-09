@@ -1,6 +1,9 @@
 require 'rest_client'
+require 'json'
 
-require_relative '../../bot-feature.rb'
+require_relative '../../../bot-feature.rb'
+require_relative 'overwatch_api.rb'
+require_relative 'basic_command.rb'
 
 class OverwatchFeature < BotFeature
   def load(bot)
@@ -46,7 +49,7 @@ class OverwatchFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
-    bot.message(contains: /^\!(ow|overwatch)/) do |event|
+    bot.message(contains: /^\!(ow|overwatch)\s/) do |event|
       parts = event.message.to_s.split(/\s+/)
       parts.delete_at 0
 
@@ -61,35 +64,8 @@ class OverwatchFeature < BotFeature
   end
 
   private
-  # Get a specific type of api url
-  def get_data(type="profile", options={})
-    return if not @@api_urls.has_key? type.to_sym
-
-    url = @@base_url
-    default_options = {
-      "platform" => "pc",
-      "region" => "us",
-      "tag" => "none",
-    }
-    default_options.each do |k, v|
-      if not options.has_key? k
-        options[k] = v
-      end
-
-      #TODO filter query params
-      url.sub! /\$#{k.upcase}/, options[k]
-    end
-
-    url += @@api_urls[type.to_sym]
-
-    begin
-      res = RestClient.get(url)
-    rescue RestClient::Exception => e
-      return {"error" => "Error: #{e.to_s}\nWith URL: #{url}"}
-    end
-
-    JSON.load res.body
-  end
+  include OverwatchAPI
+  include BasicOverwatchCommand
 
   # Consumes anything with -this arg and returns a dict.
   # Replaces parts with just the user query.
@@ -127,25 +103,6 @@ The following commands
 }
   end
 
-  def get_profile(options)
-    data = get_data("profile", options)
-    return data["error"] if data.has_key? "error"
-    data = data["data"]
-
-    games = data["games"]
-    comp = games["competitive"]
-    playtime = data["playtime"]
-
-    if data.has_key? "error"
-      return data["error"].to_s
-    end
-
-    %{**#{data["username"]}** (rank #{data["level"]})
-Quickplay: **#{games["quick"]["wins"]}** wins\t**#{playtime["quick"]}**
-Competitive (Total, W/L, **rank**, time): **#{comp["played"]}** games total (**#{comp["wins"]}** W/**#{comp["lost"]}** L)\t**#{data["competitive"]["rank"]}** rank\t#{playtime["competitive"]}
-}
-  end
-
   # Run a standard profile query for a specific player
   def run_command(type, query, options)
     query.gsub! /#/, "-"
@@ -153,7 +110,7 @@ Competitive (Total, W/L, **rank**, time): **#{comp["played"]}** games total (**#
     options["tag"] = query
 
     if type == "profile"
-      get_profile options
+      get_user_details query
     end
   end
 end
