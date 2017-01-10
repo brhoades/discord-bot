@@ -19,58 +19,13 @@ module BasicOverwatchCommand
 
   # Combines hero rankings in competitive and quickplay. expects ["us"] hash
   def combine_heroes(stats)
+    gen_stats = stats["heroes"]["stats"]
+    playtime = stats["heroes"]["playtime"]
+
     merged = {
-      "playtime" => {
-      },
-      "stats" => {
-      }
+      "stats" => deep_merge_hashes(gen_stats["competitive"], gen_stats["quickplay"]),
+      "playtime" => deep_merge_hashes(playtime["competitive"], playtime["quickplay"])
     }
-
-    playtime = merged["playtime"]
-
-    # Playtime accumulation
-    stats["heroes"]["playtime"].each do |type, details|
-      details.each do |hero, time|
-        if playtime.has_key?(hero)
-          playtime[hero] += time
-        else
-          playtime[hero] = time
-        end
-      end
-    end
-
-    stats["heroes"]["stats"].each do |type, hero_details|
-      this_type = merged["stats"]
-
-      hero_details.each do |hero, stat_variants|
-        if not this_type.has_key?(hero)
-          this_type[hero] = {}
-        end
-        hero_stats = this_type[hero]
-
-        stat_variants.each do |stat_type, stat_type_details|
-          if not hero_stats.has_key?(stat_type)
-            hero_stats[stat_type] = {}
-          end
-
-          # Finally each type of stats per hero
-          stat_type_details.each do |k, v|
-            if not hero_stats[stat_type].has_key?(k)
-              hero_stats[stat_type][k] = 0
-            end
-
-            # Sum all except for most, where we take the largest
-            if k =~ /most|best/
-              if hero_stats[stat_type][k] < v
-                hero_stats[stat_type][k] = v
-              end
-            else
-              hero_stats[stat_type][k] += v
-            end
-          end
-        end
-      end
-    end  # I'm falling!
 
     merged
   end
@@ -147,7 +102,7 @@ __Top 3 Heros by Play Time__
 
     ret = %{**#{name.capitalize}**
 #{ChronicDuration.output(gen["time_played"]*60*60, :format => :long, :units => 3)}
-*Eliminations/Deaths (k/d)*: #{gen["eliminations"]}/#{gen["deaths"]} (#{(gen["eliminations"]/gen["deaths"]).round(1)})
+*Eliminations/Deaths (k/d)*: #{gen["eliminations"]}/#{gen["deaths"]} (#{(gen["eliminations"].to_f/gen["deaths"]).round(2)})
 *Medals (G/S/B):* #{(gen["medals_gold"]+gen["medals_silver"]+gen["medals_bronze"]).to_i} (#{gen["medals_gold"]}/#{gen["medals_silver"]}/#{gen["medals_bronze"]})
 
 }

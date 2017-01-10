@@ -32,7 +32,57 @@ module OverwatchAPI
     end
   end
 
+  # Recursively merge two passed hashes.
+  # If keys contain specific substrings, they can be added or compared.
+  def deep_merge_hashes(a, b)
+    merged = {}
+
+    (a.keys + b.keys).uniq.each do |key|
+      if not a.has_key?(key)
+        merged[key] = b[key]
+        next
+      elsif not b.has_key?(key)
+        merged[key] = a[key]
+        next
+      end
+      av = a[key]
+      bv = b[key]
+
+      # Undefined behavior when one side is a hash but the other isn't.
+      if av.is_a? Hash and bv.is_a? Hash
+        merged[key] = deep_merge_hashes(av, bv)
+        next
+      elsif av.is_a? Hash
+        merged[key] = av
+        next
+      elsif b[key].is_a? Hash
+        merged[key] = bv
+        next
+      end
+
+      if bv.is_a?(Numeric) and bv.is_a?(Numeric)
+        if key.is_a?(String) and key =~ /most|max|best|accuracy/i
+          # Greater
+          if av >= bv
+            merged[key] = av
+          else
+            merged[key] = bv
+          end
+        else
+          # Sum
+          merged[key] = av + bv
+        end
+      else
+        # Choose one :\
+        merged[key] = av
+      end
+    end
+
+    merged
+  end
+
   # Change things to ints if they're .0
+  # Recursively walks through a passed hash.
   def convert_data_to_correct_types(data)
     def convert_to_appropriate_type(hash)
       hash.each do |k, v|
@@ -59,7 +109,6 @@ module OverwatchAPI
     if user =~ /[^A-Za-z0-9-]/
       return {"error" => "Error: username contains invalid symbols"}
     end
-
 
     begin
       res = RestClient.get(url)

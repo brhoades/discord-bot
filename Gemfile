@@ -15,3 +15,6 @@ gem 'gruff', '~>0.7.0'
 gem 'builder'
 gem 'rmagick'
 gem 'rerun'
+
+gem 'rspec'
+gem 'rspec-mocks'
