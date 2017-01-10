@@ -61,7 +61,11 @@ class Discordrb::Bot
 
   # Loads all features and prints out messages for them.
   def load_features
-    Dir["#{get_base_directory}/modules/**/*.rb"].map { |f| require f }
+    Dir["#{get_base_directory}/modules/**/*.rb"].each do |f|
+      if f !~ /test/
+        require f
+      end
+    end
     @features = []
 
     BotFeature.descendants.each do |feature_class|
