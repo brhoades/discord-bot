@@ -60,7 +60,7 @@ module OverwatchAPI
         next
       end
 
-      if bv.is_a?(Numeric) and bv.is_a?(Numeric)
+      if av.is_a?(Numeric) and bv.is_a?(Numeric)
         if key.is_a?(String) and key =~ /most|max|best|accuracy/i
           # Greater
           if av >= bv
