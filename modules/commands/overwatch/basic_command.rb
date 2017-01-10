@@ -8,15 +8,14 @@ module BasicOverwatchCommand
 
   # Return a string to give with basic user information
   def get_user_details(user)
-    puts "user: '#{user}'"
     data = get_data(user)
 
-    %{__**#{user}**__
+    %{__**#{user.sub(/\-/, "#")}**__
 
 #{get_general_stats(data)}
 }
-
   end
+  
 
   # Combines hero rankings in competitive and quickplay. expects ["us"] hash
   def combine_heroes(stats)

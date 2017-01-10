@@ -4,6 +4,34 @@ require 'rest-client'
 module OverwatchAPI
   #TODO: Cache
 
+  def get_username(bot, user)
+    user.gsub! /#/, '-'
+    full_user = nil
+
+    if user =~ /\-/
+      full_user = bot.db[:overwatch].where(full_user: user).first
+      short_user = user.gsub(/-[0-9]+/, "")
+
+      if not full_user or (full_user.is_a?(Array) and full_user.length == 0)
+        full_user_id = bot.db[:overwatch].insert(full_user: user, short_user: short_user)
+      end
+
+      return user
+    else
+      full_user = bot.db[:overwatch].where(short_user: user).first
+
+      if not full_user or (full_user.is_a?(Array) and full_user.length == 0)
+        return nil
+      end
+  
+      if full_user.is_a?(Array)
+        full_user.first[:full_user]
+      else
+        full_user[:full_user]
+      end
+    end
+  end
+
   # Change things to ints if they're .0
   def convert_data_to_correct_types(data)
     def convert_to_appropriate_type(hash)

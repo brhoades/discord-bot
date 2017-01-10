@@ -59,7 +59,7 @@ class OverwatchFeature < BotFeature
       end
 
       options = consume_options parts
-      event.respond(run_command("profile", parts.first, options))
+      event.respond(run_command(bot, "profile", parts.first, options))
     end
   end
 
@@ -104,13 +104,18 @@ The following commands
   end
 
   # Run a standard profile query for a specific player
-  def run_command(type, query, options)
+  def run_command(bot, type, query, options)
     query.gsub! /#/, "-"
     query.gsub! /[^A-Za-z0-9\-]/, ""
     options["tag"] = query
 
     if type == "profile"
-      get_user_details query
+      user = get_username(bot, query)
+      if user == nil
+        return "Unknown user #{user}"
+      end
+
+      get_user_details user
     end
   end
 end
