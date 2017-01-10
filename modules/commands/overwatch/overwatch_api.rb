@@ -4,6 +4,25 @@ require 'rest-client'
 module OverwatchAPI
   #TODO: Cache
 
+  # Change things to ints if they're .0
+  def convert_data_to_correct_types(data)
+    def convert_to_appropriate_type(hash)
+      hash.each do |k, v|
+        if v.is_a?(Hash)
+          convert_to_appropriate_type(v)
+          next
+        end
+
+        if v.is_a?(Float) and v.to_i.to_f == v.to_f
+          hash[k] = v.to_i
+        end
+      end
+
+    end
+
+    convert_to_appropriate_type(data)
+  end
+
   # Gets a user's data and returns the JSON for it. If there's an error,
   # includes a "error" key.
   def get_data(user)
@@ -20,6 +39,8 @@ module OverwatchAPI
       return {"error" => "Error: #{e.to_s}\nWith URL: #{url}"}
     end
 
-    JSON.load res.body
+    ret = JSON.load res.body
+    convert_data_to_correct_types ret
+    ret
   end
 end

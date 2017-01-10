@@ -92,8 +92,12 @@ class Discordrb::Bot
           message = " in module #{attributes[:caller]}"
         end
 
-        event.respond %{Error#{message}: ```#{e.to_s}
+        message = %{Error#{message}: ```#{e.to_s}
 #{e.backtrace.join("\n")}```}
+        puts message
+        event.respond(message)
+
+
       end
     end
   end
