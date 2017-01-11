@@ -11,6 +11,12 @@ class ChronicFeature < BotFeature
   def register_handlers(bot, scheduler)
     bot.message(contains: @primary_regex) do |event|
       next if event.author.current_bot?
+      if not can_create_reminder?(bot, event.message.author)
+
+        event.respond("!giphy not gonna happen")
+        next
+      end
+
 
       matches = @primary_regex.match(event.message.to_s)
       timerange, reminder = matches[:timerange], matches[:reminder]
@@ -52,6 +58,13 @@ class ChronicFeature < BotFeature
 
   private
   include ModelHandlers
+
+  def can_create_reminder?(bot, discord_user)
+    user = get_user(bot, discord_user)
+    reminders = bot.db[:chronic].where(user_id: user[:id]).all
+
+    return reminders.length < 10
+  end
 
   # Create a model handler entry on our table
   def create_reminder(bot, timerange, target, reminder, message)
