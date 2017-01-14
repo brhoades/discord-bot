@@ -17,20 +17,20 @@ module BF1DetailedStats
     response = get_detailed_statistics(name)
     return response if not response.is_a? Hash
 
-    res = ["**#{response["profile"]["displayName"]}**", "", "```markdown"]
+    res = ["**#{response.dig("profile", "displayName")}**", "", "```markdown"]
     # TODO move vehicles and kit separate then join here.
-    response["result"]["vehicleStats"].each do |v|
+    response.dig("result", "vehicleStats").each do |v|
       # Alias vehicles so they match kits.
-      v["kills"] = v["killsAs"]
-      v["secondsAs"] = v["timeSpent"]
+      v["kills"] = v.dig("killsAs")
+      v["secondsAs"] = v.dig("timeSpent")
     end
-    kits = response["result"]["kitStats"] + response["result"]["vehicleStats"]
-    totalTime = kits.reduce(0) {|sum, kit| sum += kit["secondsAs"].to_i}
-    maxNameSize = kits.max { |a, b| a["name"].length <=> b["name"].length }["name"].length
-    maxKills = kits.max { |a, b| a["kills"].round(0).to_s.length <=> b["kills"].round(0).to_s.length }["kills"].round(0).to_s.length
+    kits = response.dig("result", "kitStats") + response.dig("result", "vehicleStats")
+    totalTime = kits.reduce(0) {|sum, kit| sum += kit.dig("secondsAs")&.to_i}
+    maxNameSize = kits.max { |a, b| a.dig("name")&.length <=> b.dig("name")&.length }.dig("name")&.length
+    maxKills = kits.max { |a, b| a.dig("kills")&.round(0)&.to_s&.length <=> b.dig("kills")&.round(0)&.to_s&.length }["kills"]&.round(0)&.to_s&.length
 
     kits.each do |kit|
-      res << "#{kit["name"].ljust(maxNameSize, ' ')}\tKills: #{kit["kills"].round(0).to_s.ljust(maxKills, ' ')} - Time as: #{ChronicDuration.output(kit["secondsAs"].to_i, :format => :long, :units => 2)} (#{(kit["secondsAs"].to_f/totalTime*100).round(0)}%)"
+      res << "#{kit.dig("name")&.ljust(maxNameSize, ' ')}\tKills: #{kit.dig("kills")&.round(0)&.to_s&.ljust(maxKills, ' ')} - Time as: #{ChronicDuration.output(kit.dig("secondsAs")&.to_i, :format => :long, :units => 2)} (#{(kit.dig("secondsAs")&.to_f/totalTime*100)&.round(0)}%)"
     end
 
     res << "```"
