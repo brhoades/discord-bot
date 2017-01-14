@@ -27,7 +27,7 @@ module BF1DetailedStats
     kits = response.dig("result", "kitStats") + response.dig("result", "vehicleStats")
     totalTime = kits.reduce(0) {|sum, kit| sum += kit.dig("secondsAs")&.to_i}
     maxNameSize = kits.max { |a, b| a.dig("name")&.length <=> b.dig("name")&.length }.dig("name")&.length
-    maxKills = kits.max { |a, b| a.dig("kills")&.round(0)&.to_s&.length <=> b.dig("kills")&.round(0)&.to_s&.length }["kills"]&.round(0)&.to_s&.length
+    maxKills = kits.max { |a, b| a.dig("kills")&.round(0)&.to_s&.length <=> b.dig("kills")&.round(0)&.to_s&.length }.dig("kills")&.round(0)&.to_s&.length
 
     kits.each do |kit|
       res << "#{kit.dig("name")&.ljust(maxNameSize, ' ')}\tKills: #{kit.dig("kills")&.round(0)&.to_s&.ljust(maxKills, ' ')} - Time as: #{ChronicDuration.output(kit.dig("secondsAs")&.to_i, :format => :long, :units => 2)} (#{(kit.dig("secondsAs")&.to_f/totalTime*100)&.round(0)}%)"
