@@ -12,7 +12,6 @@ class ChronicFeature < BotFeature
     bot.message(contains: @primary_regex) do |event|
       next if event.author.current_bot?
       if not can_create_reminder?(bot, event.message.author)
-
         event.respond("!giphy not gonna happen")
         next
       end

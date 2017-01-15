@@ -11,6 +11,30 @@ describe BF1DetailedStats do
       body: example_response_contents
     )
   end
+
+  describe "#get_detailed_statistics" do
+    it "should call get_data which should call RestClient#get" do
+      get_detailed_statistics("somename")
+
+      assert_requested @mock
+    end
+
+    it "should return an error with an empty name" do
+      result = get_detailed_statistics("")
+
+      expect(result).to be_a Hash
+      expect(result).to have_key("error")
+      assert_not_requested @mock
+    end
+
+    it "should return a hash with a successful key" do
+      result = get_detailed_statistics("somename")
+
+      expect(result).to be_a Hash
+      expect(result).to_not have_key("error")
+      expect(result).to have_key("successful")
+    end
+  end
 end
 
 describe BF1BasicStats do

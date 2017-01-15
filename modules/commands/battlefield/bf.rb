@@ -44,6 +44,8 @@ class BF1TrackerFeature < BotFeature
 
       if sub =~ /kits?/
         event.respond pretty_kit_statistics(message.join " ")
+      elsif sub =~ /stars?/
+        event.respond get_stars_statistics(message.join " ")
       end
     end
   end
