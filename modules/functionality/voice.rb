@@ -1,4 +1,6 @@
 require 'digest'
+require 'tempfile'
+require 'open-uri'
 
 require_relative '../../bot-feature.rb'
 
@@ -12,7 +14,10 @@ class VoiceFeatures < BotFeature
     config = bot.get_config_for_module(__FILE__)
     @config = {
       cache: true,
-      cache_directory: "/tmp/"
+      cache_directory: "/tmp/",
+      authorized_play_users: [],  # * allows all
+      default_play_volume: 0.05,
+      default_volume: 1.0
     }
 
     bot.map_config(config, @config)
@@ -23,8 +28,56 @@ class VoiceFeatures < BotFeature
       process_voice_state(bot, event.server, event.channel, event.user)
     end
 
+    bot.message(contains: /^\!play .+/) do |event|
+      authed = false
+      @config[:authorized_play_users].each do |name|
+        if event.author.username.to_s =~ /^#{name}/i
+          authed = true
+        end
+      end
+
+      next "!giphy unauthorized" unless authed
+
+      msg = event.message.to_s.split(/\s+/)
+      file = msg[1]
+
+      # Default volume is fairly quiet
+      volume = @config[:default_play_volume]
+      if msg.size == 3
+        volume = msg[2].to_f
+      end
+
+      filename = Tempfile.new('input')
+      filename.write(open(file) { |f| f.read })
+      filename.close
+      tempfile = `tempfile -s .wav`.gsub(/\n/, "")
+
+      system("ffmpeg -y -loglevel panic -i #{filename.path} #{tempfile}")
+      if $? != 0
+        puts "Error when transcoding #{msg[1]}"
+        filename.delete
+        `rm -f #{tempfile}`
+        next
+      end
+      filename.delete
+
+      if not $voice_queue.has_key? event.server
+        $voice_queue[event.server] = []
+      end
+
+      $voice_queue[event.server] << {
+        file: tempfile,
+        channel: event.author.voice_channel,
+        volume: volume
+      }
+    end
+
     scheduler.every '1s' do
-      process_voice_queue bot if $voice_queue.size > 0
+      begin
+        process_voice_queue bot if $voice_queue.size > 0
+      rescue Exception => e
+        puts "Error in process voice queue #{e.to_s}"
+      end
     end
   end
 
@@ -34,16 +87,33 @@ class VoiceFeatures < BotFeature
   # If the bot isn't speaking on a server,
   def process_voice_queue(bot)
     return if $voice_queue.size == 0
+
     $voice_queue.each do |k,v|
       next if v.size == 0
       voice_bot = nil
       if bot.voices.has_key? k.id
         voice_bot = bot.voices[k.id]
       end
+
       return if voice_bot and voice_bot.playing?
-    
+
       message = v.pop
+
+      # Check cached file exists
+      if not File.exist?(message[:file])
+        puts "Unknown file #{message[:file]}"
+        next
+      end
+
       voice_bot = bot.voice_connect message[:channel]
+
+      # Adjust volume
+      if message.has_key?(:volume)
+        voice_bot.filter_volume = message[:volume].to_f
+      else
+        voice_bot.filter_volume = @config[:default_volume]
+      end
+
       voice_bot.play_file message[:file]
       voice_bot.stop_playing  # if we don't stop playing, even though play_file is blocking, playing?
                               # will continue to return true.
@@ -87,7 +157,7 @@ class VoiceFeatures < BotFeature
   # TODO: do this on bot start.
   # TODO: decouple from sending messages
   def process_voice_state(bot, server, channel, user)
-    return if user.username == bot.profile.username
+    return if user.current_bot?
 
     if !$voice.has_key? server
       $voice[server] = {} 
@@ -102,7 +172,7 @@ class VoiceFeatures < BotFeature
     $voice[server].each do |k,v|
       if v.include? user and k != channel
         v.delete user
-        if v.size > 0
+        if v.size > 1
           # notify users, this isn't just an initial load.
           send_message bot, server, k, "#{name} left"
         end
@@ -111,7 +181,10 @@ class VoiceFeatures < BotFeature
 
     if channel and !$voice[server][channel].include? user
       $voice[server][channel] << user
-      if $voice[server][channel].length > 0 
+      total_server = $voice[server].map { |l| l.size }.reduce(0, :+)
+      if total_server == 1 and $voice[server][channel].size == 1
+        send_message bot, server, channel, "You look nice today, #{name}"
+      elsif $voice[server][channel].length >= 2 
         send_message bot, server, channel, "#{name} joined"
       end
      end

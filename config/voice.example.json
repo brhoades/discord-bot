@@ -1,4 +1,8 @@
 {
   "cache": true,
-  "cache_directory": "/tmp/cached_voices"
+  "cache_directory": "/tmp/cached_voices/",
+  "authorized_play_users": [
+  ],
+  "default_play_volume": 0.05,
+  "default_volume": 1.0
 }
