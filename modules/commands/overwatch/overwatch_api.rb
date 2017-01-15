@@ -106,7 +106,7 @@ module OverwatchAPI
   def get_data(user)
     url = "https://owapi.net/api/v3/u/#{user}/blob"
 
-    if user =~ /[^A-Za-z0-9-]/
+    if user =~ /[^A-Za-z0-9-]/ or user =~ /^\s*$/
       return {"error" => "Error: username contains invalid symbols"}
     end
 

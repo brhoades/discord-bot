@@ -1,24 +1,31 @@
 require_relative '../overwatch_api.rb'
+require 'net/http'
+require 'webmock/rspec'
 
-include OverwatchAPI
 
 describe OverwatchAPI do
-  before(:each) do
+  include OverwatchAPI
+
+  before(:example) do
     example_response = File.join(File.expand_path(File.dirname(__FILE__)), "example-response.json")
     example_response_contents = IO.read(example_response)
 
-    rest = double("RestClient")
-    response = double(body: example_response_contents)
-
-    allow(rest).to receive(:get).and_return(response)
+    @mock = stub_request(:any, /owapi/).to_return(
+      body: example_response_contents
+    )
   end
 
 
   describe "#get_data" do
+    it "should call RestClient#get" do
+      get_data("someuser")
+      assert_requested @mock
+    end
+
     describe "is given no user" do
       it "should return a hash with an error key" do
         expect(get_data("")).to have_key("error")
-        expect("RestClient").to_not receive(:get)
+        assert_not_requested @mock
         end
     end
 
@@ -26,7 +33,7 @@ describe OverwatchAPI do
       it "should return a hash with an error key" do
         ["!!", "@@", "##", "$$", "brodes#1", "user&2"].each do |name|
           expect(get_data(name)).to have_key("error")
-          expect("RestClient").to_not receive(:get)
+          assert_not_requested @mock
         end
       end
     end

@@ -19,3 +19,4 @@ gem 'rerun'
 
 gem 'rspec'
 gem 'rspec-mocks'
+gem 'webmock'

@@ -9,7 +9,7 @@ module BF1DetailedStats
 
   # Does a rest query to bf1tracker for detailed stats for a provided username.
   def get_detailed_statistics(name)
-    get_rest_api("https://battlefieldtracker.com/bf1/api/Stats/DetailedStats?platform=3&displayName=#{name}")
+    get_data("https://battlefieldtracker.com/bf1/api/Stats/DetailedStats?platform=3&displayName=#{name}")
   end
 
   # Grabs detailed bf1tracker statistics and returns stringified kit information.
