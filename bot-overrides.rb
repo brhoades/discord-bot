@@ -105,4 +105,8 @@ class Discordrb::Bot
       end
     end
   end
+
+  def register_method(name, &block)
+    self.class.send(:define_method, name, block)
+  end
 end

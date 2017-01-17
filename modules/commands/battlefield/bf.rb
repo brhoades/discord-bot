@@ -19,15 +19,25 @@ class BF1TrackerFeature < BotFeature
 
     @header = {"TRN-Api-Key": @config[:bftracker_api_key]}
     @enabled = (@config[:bftracker_api_key] != "")
-
-    @location_cache = {}
   end
 
   def register_handlers(bot, scheduler)
+    bot.add_help({
+      command: ["bf", "bf1"],
+      short_help: %{!bf: battlefield user statistics},
+      long_help: %{Battlefield User Statstics
+Usage:
+  !bf <user>: show basic user information.
+  !bf -kits <user>: show information about a user's kits including time used.
+  !bf -stars <user>: show weapons and their number of stars for a user (if any).
+  !bf -medals <user>: show medals for a user, including in progress.
+}
+    })
+
     bot.message(contains: /^[!\/]bf1? [A-Za-z0-9]+/) do |event|
       next if not handler_check event
-
       event.respond "Missing API key" if not @enabled
+
       message = event.message.to_s.split(/ /)
       message.delete_at 0
       event.respond pretty_basic_statistics(message.join " ")
@@ -35,8 +45,8 @@ class BF1TrackerFeature < BotFeature
 
     bot.message(contains: /^[!\/]bf1? -[A-Za-z]+ [A-Za-z0-9]+/) do |event|
       next if not handler_check event
-
       event.respond "Missing API key" if not @enabled
+
       message = event.message.to_s.split(/ /)
       message.delete_at 0
       sub = message[0]
