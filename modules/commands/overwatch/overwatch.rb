@@ -4,6 +4,8 @@ require 'json'
 require_relative '../../../bot-feature.rb'
 require_relative 'overwatch_api.rb'
 require_relative 'basic_command.rb'
+require_relative 'patch_notes.rb'
+
 
 class OverwatchFeature < BotFeature
   def load(bot)
@@ -58,6 +60,24 @@ class OverwatchFeature < BotFeature
         next
       end
 
+      if parts.size >= 1 and parts[0] =~ /-(patch|p|patchnotes|pn)/
+        pns = ""
+        if parts.size == 2 and parts[1] == "ptr"
+          pns = get_ptr_pns
+        else
+          pns = get_ow_pns
+        end
+
+        # Split up response
+        message = bot.paginate_response(pns, takeoff=16)
+        puts "Message len: #{message.length}"
+        message.each do |msg|
+          event.respond "```Markdown\n#{msg}```"
+        end
+
+        next
+      end
+
       options = consume_options parts
       event.respond(run_command(bot, "profile", parts.first, options))
     end
@@ -66,6 +86,7 @@ class OverwatchFeature < BotFeature
   private
   include OverwatchAPI
   include BasicOverwatchCommand
+  include PatchNotes
 
   # Consumes anything with -this arg and returns a dict.
   # Replaces parts with just the user query.
@@ -97,9 +118,18 @@ All commands default to us / pc / quickplay. You can change this with any comman
   -r(egion) us/eu/kr/cn/global
   -m(ode) q/qp/quick/quickplay/c/cp/comp/competitive
 
-The following commands
-  !ow: this
-  !ow player
+Examples
+  !ow player#159
+  !ow -r eu -plat pc -m qp
+
+---
+
+Patch notes are also available:
+  !ow -patchnotes/-pn/-patch (ptr or normal/ow)
+
+For example:
+  !ow -patchnotes  # Gives regular overwatch patchnotes
+  !ow -pn ptr      # PTR Patch Notes
 }
   end
 

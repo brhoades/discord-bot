@@ -24,13 +24,13 @@ class BF1TrackerFeature < BotFeature
   def register_handlers(bot, scheduler)
     bot.add_help({
       command: ["bf", "bf1"],
-      short_help: %{!bf: battlefield user statistics},
+      short_help: %{!bf/!bf1: battlefield user statistics},
       long_help: %{Battlefield User Statstics
 Usage:
   !bf <user>: show basic user information.
-  !bf -kits <user>: show information about a user's kits including time used.
-  !bf -stars <user>: show weapons and their number of stars for a user (if any).
-  !bf -medals <user>: show medals for a user, including in progress.
+  !bf -kit/kits <user>: show information about a user's kits including time used.
+  !bf -star/stars <user>: show weapons and their number of stars for a user (if any).
+  !bf -medal/medals <user>: show medals for a user, including in progress.
 }
     })
 

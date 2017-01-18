@@ -109,4 +109,13 @@ class Discordrb::Bot
   def register_method(name, &block)
     self.class.send(:define_method, name, block)
   end
+
+  def paginate_response(someresponse, takeoff=0)
+    return [someresponse] if someresponse.length < 2000
+
+    # Split it so our largest chunk is 1999 (-takeoff) chars
+    # The last entry is blank so toss it.
+    # Regex: \s\S matches all characters including newlines.
+    return someresponse.scan(/[\s\S]{,#{1999-takeoff}}/)[0...-1]
+  end
 end
