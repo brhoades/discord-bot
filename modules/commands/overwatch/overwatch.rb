@@ -12,6 +12,7 @@ class OverwatchFeature < BotFeature
     config = bot.get_config_for_module(__FILE__)
     @config = {
       "channel_for_announce": ["general"]  # channels to announce patchnotes in
+      "announce_tags": ["@everyone"]  # full tag names to tag on announcements
     }
 
     @@base_url = "https://api.lootbox.eu/$PLATFORM/$REGION/$TAG/"
@@ -85,7 +86,7 @@ class OverwatchFeature < BotFeature
       event.respond(run_command(bot, "profile", parts.first, options))
     end
 
-    scheduler.every '5m' do
+    scheduler.every '15m' do
       current_pns = get_ow_pns
 
       if current_pns != @last_regular_patch
@@ -98,7 +99,7 @@ class OverwatchFeature < BotFeature
       end
     end
 
-    scheduler.every '7m' do
+    scheduler.every '20m' do
       current_ptr_pns = get_ptr_pns
       if current_ptr_pns != @last_ptr_patch
         # Restart?
@@ -186,6 +187,10 @@ For example:
       puts "CHANNELS: #{channels}"
 
       channels.each do |channel|
+        if config[:announce_tags].length > 0
+          channel.send_message config[:announce_tags].join(" ")
+        end
+
         message.map { |m| channel.send_message "```Markdown\n#{m}```" }
       end
     end
