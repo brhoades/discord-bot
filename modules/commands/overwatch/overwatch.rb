@@ -11,6 +11,7 @@ class OverwatchFeature < BotFeature
   def load(bot)
     config = bot.get_config_for_module(__FILE__)
     @config = {
+      "channel_for_announce": ["general"]  # channels to announce patchnotes in
     }
 
     @@base_url = "https://api.lootbox.eu/$PLATFORM/$REGION/$TAG/"
@@ -47,6 +48,9 @@ class OverwatchFeature < BotFeature
       "ps": "psn"
     }
 
+    @last_regular_patch = nil
+    @last_ptr_patch = nil
+
     bot.map_config(config, @config)
   end
 
@@ -70,7 +74,6 @@ class OverwatchFeature < BotFeature
 
         # Split up response
         message = bot.paginate_response(pns, takeoff=16)
-        puts "Message len: #{message.length}"
         message.each do |msg|
           event.respond "```Markdown\n#{msg}```"
         end
@@ -80,6 +83,31 @@ class OverwatchFeature < BotFeature
 
       options = consume_options parts
       event.respond(run_command(bot, "profile", parts.first, options))
+    end
+
+    scheduler.every '5m' do
+      current_pns = get_ow_pns
+
+      if current_pns != @last_regular_patch
+        # Restart?
+        if @last_regular_patch != nil
+          dispatch_message(bot, current_pns)
+        end
+
+        @last_regular_patch = current_pns
+      end
+    end
+
+    scheduler.every '7m' do
+      current_ptr_pns = get_ptr_pns
+      if current_ptr_pns != @last_ptr_patch
+        # Restart?
+        if @last_ptr_patch != nil
+          dispatch_message(bot, current_ptr_pns)
+        end
+
+        @last_ptr_patch = current_ptr_pns
+      end
     end
   end
 
@@ -146,6 +174,20 @@ For example:
       end
 
       get_user_details user
+    end
+  end
+
+  # send a message out to the appropriate channels
+  def dispatch_message(bot, pns)
+    message = bot.paginate_response(pns, takeoff=16)
+
+    @config[:channel_for_announce].each do |channel|
+      channels = bot.find_channel(channel)
+      puts "CHANNELS: #{channels}"
+
+      channels.each do |channel|
+        message.map { |m| channel.send_message "```Markdown\n#{m}```" }
+      end
     end
   end
 end
