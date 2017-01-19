@@ -11,11 +11,10 @@ class OverwatchFeature < BotFeature
   def load(bot)
     config = bot.get_config_for_module(__FILE__)
     @config = {
-      "channel_for_announce": ["general"]  # channels to announce patchnotes in
+      "channel_for_announce": ["general"], # channels to announce patchnotes in
       "announce_tags": ["@everyone"]  # full tag names to tag on announcements
     }
 
-    @@base_url = "https://api.lootbox.eu/$PLATFORM/$REGION/$TAG/"
     @@api_urls = {
       "profile": "profile",
       "achievements": "achievements",
