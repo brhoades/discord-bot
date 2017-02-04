@@ -29,47 +29,7 @@ class VoiceFeatures < BotFeature
     end
 
     bot.message(contains: /^\!play .+/) do |event|
-      authed = false
-      @config[:authorized_play_users].each do |name|
-        if event.author.username.to_s =~ /^#{name}/i
-          authed = true
-        end
-      end
-
-      next "!giphy unauthorized" unless authed
-
-      msg = event.message.to_s.split(/\s+/)
-      file = msg[1]
-
-      # Default volume is fairly quiet
-      volume = @config[:default_play_volume]
-      if msg.size == 3
-        volume = msg[2].to_f
-      end
-
-      filename = Tempfile.new('input')
-      filename.write(open(file) { |f| f.read })
-      filename.close
-      tempfile = `tempfile -s .wav`.gsub(/\n/, "")
-
-      system("ffmpeg -y -loglevel panic -i #{filename.path} #{tempfile}")
-      if $? != 0
-        puts "Error when transcoding #{msg[1]}"
-        filename.delete
-        `rm -f #{tempfile}`
-        next
-      end
-      filename.delete
-
-      if not $voice_queue.has_key? event.server
-        $voice_queue[event.server] = []
-      end
-
-      $voice_queue[event.server] << {
-        file: tempfile,
-        channel: event.author.voice_channel,
-        volume: volume
-      }
+      play_file event
     end
 
     scheduler.every '1s' do
@@ -118,10 +78,55 @@ class VoiceFeatures < BotFeature
       voice_bot.stop_playing  # if we don't stop playing, even though play_file is blocking, playing?
                               # will continue to return true.
 
-      if !@config[:cache]
-        `rm #{message[:file]}`
+      if !@config[:cache] or (message.has_key? :delete and message[:delete])
+        `rm -f #{message[:file]}`
       end
     end
+  end
+
+  def play_file(event)
+    authed = false
+    @config[:authorized_play_users].each do |name|
+      if event.author.username.to_s =~ /^#{name}/i
+        authed = true
+      end
+    end
+
+    return "!giphy unauthorized" unless authed
+
+    msg = event.message.to_s.split(/\s+/)
+    file = msg[1]
+
+    # Default volume is fairly quiet
+    volume = @config[:default_play_volume]
+    if msg.size == 3
+      volume = msg[2].to_f
+    end
+
+    filename = Tempfile.new('input')
+    filename.write(open(file) { |f| f.read })
+    filename.close
+    tempfile = `tempfile -s .wav`.gsub(/\n/, "")
+
+    system("ffmpeg -y -loglevel panic -i #{filename.path} #{tempfile}")
+    if $? != 0
+      puts "Error when transcoding #{msg[1]}"
+      filename.delete
+      `rm -f #{tempfile}`
+      return
+    end
+    filename.delete
+
+    if not $voice_queue.has_key? event.server
+      $voice_queue[event.server] = []
+    end
+
+    $voice_queue[event.server] << {
+      file: tempfile,
+      channel: event.author.voice_channel,
+      volume: volume,
+      delete: true
+    }
   end
 
   # Actually send a message. Cache the mp3 in tmp.
@@ -136,7 +141,7 @@ class VoiceFeatures < BotFeature
 
     if !File.exists?("#{file}.mp3")
       File.write("#{file}.txt", message)
-      `perl simple-google-tts/speak.pl en "#{file}.txt" "#{file}.mp3"`
+      `perl simple-google-tts/speak.pl ja "#{file}.txt" "#{file}.mp3"`
       `rm #{file}.txt`
     end
 
@@ -160,14 +165,14 @@ class VoiceFeatures < BotFeature
     return if user.current_bot?
 
     if !$voice.has_key? server
-      $voice[server] = {} 
+      $voice[server] = {}
     end
 
     if channel and !$voice[server].has_key? channel
       $voice[server][channel] = []
     end
 
-    name = user.username.gsub /[0-9]+$/, ""
+    name = (user.username.gsub /[0-9]+$/, "").downcase
 
     $voice[server].each do |k,v|
       if v.include? user and k != channel
@@ -184,10 +189,9 @@ class VoiceFeatures < BotFeature
       total_server = $voice[server].map { |l| l.size }.reduce(0, :+)
       if total_server == 1 and $voice[server][channel].size == 1
         send_message bot, server, channel, "You look nice today, #{name}"
-      elsif $voice[server][channel].length >= 2 
+      elsif $voice[server][channel].length >= 2
         send_message bot, server, channel, "#{name} joined"
       end
      end
   end
 end
-

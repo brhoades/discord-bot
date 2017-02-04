@@ -19,7 +19,11 @@ module BF1BasicStats
 
   # Given someone's rank and their progress towards the next rank, return their total experience
   def get_total_experience(rank, progress)
-    ranks(rank.to_i) + progress.to_i
+    if rank.to_i != 100
+      ranks(rank.to_i) + progress.to_i
+    else
+      ranks(rank.to_i)
+    end
   end
 
   # Grabs basic bf1tracker stats and returns a string summarizing them.
@@ -29,8 +33,10 @@ module BF1BasicStats
 
     result = response["result"]
     total = "#{get_total_experience(result["rank"]["number"], result["rankProgress"]["current"].round(0))}"
+    kd = (result["kills"].to_f/result["deaths"].to_f).round(2)
+    wl = (result["wins"].to_f/result["losses"].to_f).round(2)
     %{**#{response["profile"]["displayName"]}**
-*K/D*: #{result["kills"]}/#{result["deaths"]}\t*W/L*: #{result["wins"]}/#{result["losses"]}\t\
+*K/D*: #{result["kills"]}/#{result["deaths"]} (#{kd})\t*W/L*: #{result["wins"]}/#{result["losses"]} (#{wl})\t\
 *KPM*: #{result["kpm"]}
 *Time played*: #{ChronicDuration.output(result["timePlayed"], :format => :long, :units => 3)}
 #{result["rank"]["name"]} (#{(result["rankProgress"]["current"]/result["rankProgress"]["total"]*100).round(1)}% to next rank)\t\

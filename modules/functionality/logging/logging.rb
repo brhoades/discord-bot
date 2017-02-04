@@ -1,7 +1,7 @@
 require 'sequel'
 
-require_relative '../../bot-feature.rb'
-require_relative '../../modelhandlers.rb'
+require_relative '../../../bot-feature.rb'
+require_relative '../../../modelhandlers.rb'
 
 class LoggingFeature < BotFeature
   include ModelHandlers

@@ -2,6 +2,8 @@ require 'discordrb'
 require 'rufus-scheduler'
 require_relative 'bot-feature.rb'
 require_relative 'bot-overrides.rb'
+require_relative 'db-config.rb'
+
 
 # https://discordapp.com/oauth2/authorize?client_id=251052745790849026&scope=bot&permissions=70282304
 features = []
