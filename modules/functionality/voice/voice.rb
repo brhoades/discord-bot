@@ -18,7 +18,8 @@ class VoiceFeatures < BotFeature
       cache_directory: "/tmp/",
       authorized_play_users: [],
       default_play_volume: 0.1,
-      default_volume: 1.0
+      default_volume: 1.0,
+      lang: 'jp'
     }
 
     @voice = {}

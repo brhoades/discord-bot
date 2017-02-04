@@ -1,3 +1,8 @@
+require 'digest'
+
+require_relative 'voice_message.rb'
+
+
 module VoiceEntryPoints
   def play_file(event)
     msg = event.message.to_s.split(/\s+/)
@@ -27,19 +32,19 @@ module VoiceEntryPoints
       @voice_queue[event.server] = []
     end
 
-    @voice_queue[event.server] << {
-      file: tempfile,
-      channel: event.author.voice_channel,
-      volume: volume,
-      delete: true,
-      owner: event.author
-    }
+
+    message = VoiceMessage.new(event.author, event.author.voice_channel, tempfile)
+    message.delete = true
+    message.volume = volume
+
+    @voice_queue[event.server] << message
   end
 
   # Actually send a message. Cache the mp3 in tmp.
   # TODO: make cache optional and give it a sub directory.
   def send_message(bot, server, channel, user, message)
-    name = Digest::SHA256.hexdigest message
+    lang = @config[:lang]
+    name = Digest::SHA256.hexdigest (message.to_s + @config[:lang])
     if !Dir.exists?(@config[:cache_directory])
       `mkdir -p #{@config[:cache_directory]}`
     end
@@ -61,10 +66,6 @@ module VoiceEntryPoints
       return
     end
 
-    @voice_queue[server] << {
-      file: "#{file}.mp3",
-      channel: channel,
-      owner: user
-    }
+    @voice_queue[server] << VoiceMessage.new(user, channel, "#{file}.mp3")
   end
 end

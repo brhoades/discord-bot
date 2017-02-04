@@ -16,26 +16,22 @@ module VoiceProcessing
       message = v.pop
 
       # Check cached file exists
-      if not File.exist?(message[:file])
-        puts "Unknown file #{message[:file]}"
+      if not File.exist?(message.file)
+        puts "Unknown file #{message.file}"
         next
       end
 
-      voice_bot = bot.voice_connect message[:channel]
+      voice_bot = bot.voice_connect message.channel
 
       # Adjust volume
-      if message.has_key?(:volume)
-        voice_bot.filter_volume = message[:volume].to_f
-      else
-        voice_bot.filter_volume = @config[:default_volume]
-      end
+      voice_bot.filter_volume = message.volume
 
-      voice_bot.play_file message[:file]
+      voice_bot.play_file message.file
       voice_bot.stop_playing  # if we don't stop playing, even though play_file is blocking, playing?
                               # will continue to return true.
 
-      if !@config[:cache] or (message.has_key? :delete and message[:delete])
-        `rm -f #{message[:file]}`
+      if !@config[:cache] or message.delete?
+        `rm -f #{message.file}`
       end
     end
   end
