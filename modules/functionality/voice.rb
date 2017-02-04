@@ -29,19 +29,39 @@ class VoiceFeatures < BotFeature
     end
 
     bot.message(contains: /^\!play .+/) do |event|
+      next "!giphy unauthorized" unless authorized_user(event.author.username)
+
       play_file event
     end
 
     bot.message(contains: /^\!stop/) do |event|
+      next "!giphy unauthorized" unless authorized_user(event.author.username)
+
       server = event.server.id
       if bot.voices.has_key? server
         bot.voices[server].stop_playing true
       end
     end
 
+    bot.message(contains: /^\!empty/) do |event|
+      next "!giphy unauthorized" unless authorized_user(event.author.username)
+
+      server = event.server.id
+
+      # Stop
+      if bot.voices.has_key? server
+        bot.voices[server].stop_playing true
+      end
+
+      # Clear
+      if $voice_queue.has_key? event.server
+        $voice_queue[event.server].clear
+      end
+    end
+
     scheduler.every '1s' do
       begin
-        process_voice_queue bot if $voice_queue.size > 0
+        process_voice_queue bot
       rescue Exception => e
         puts "Error in process voice queue #{e.to_s}"
       end
@@ -49,6 +69,18 @@ class VoiceFeatures < BotFeature
   end
 
   private
+
+  def authorized_user(user)
+    authed = false
+    @config[:authorized_play_users].each do |name|
+      if user.to_s =~ /^#{name}/i
+        authed = true
+        break
+      end
+    end
+
+    authed
+  end
 
   # Called every second by rufus to process our voice queue.
   # If the bot isn't speaking on a server,
@@ -92,15 +124,6 @@ class VoiceFeatures < BotFeature
   end
 
   def play_file(event)
-    authed = false
-    @config[:authorized_play_users].each do |name|
-      if event.author.username.to_s =~ /^#{name}/i
-        authed = true
-      end
-    end
-
-    return "!giphy unauthorized" unless authed
-
     msg = event.message.to_s.split(/\s+/)
     file = msg[1]
 
