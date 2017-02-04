@@ -15,8 +15,8 @@ class VoiceFeatures < BotFeature
     @config = {
       cache: true,
       cache_directory: "/tmp/",
-      authorized_play_users: [],  # * allows all
-      default_play_volume: 0.05,
+      authorized_play_users: [],
+      default_play_volume: 0.1,
       default_volume: 1.0
     }
 
@@ -30,6 +30,13 @@ class VoiceFeatures < BotFeature
 
     bot.message(contains: /^\!play .+/) do |event|
       play_file event
+    end
+
+    bot.message(contains: /^\!stop/) do |event|
+      server = event.server.id
+      if bot.voices.has_key? server
+        bot.voices[server].stop_playing true
+      end
     end
 
     scheduler.every '1s' do
@@ -140,7 +147,7 @@ class VoiceFeatures < BotFeature
     file = File.join(@config[:cache_directory], "#{name}")
 
     if !File.exists?("#{file}.mp3")
-      File.write("#{file}.txt", message)
+      File.write "#{file}.txt", message
       `perl simple-google-tts/speak.pl ja "#{file}.txt" "#{file}.mp3"`
       `rm #{file}.txt`
     end
