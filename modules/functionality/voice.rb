@@ -4,9 +4,6 @@ require 'open-uri'
 
 require_relative '../../bot-feature.rb'
 
-$voice = {}
-$voice_queue = {}
-$QUEUE_SIZE = 3
 
 # Announce users joining and leaving channels.
 class VoiceFeatures < BotFeature
@@ -20,6 +17,9 @@ class VoiceFeatures < BotFeature
       default_volume: 1.0
     }
 
+    @voice = {}
+    @voice_queue = {}
+    @QUEUE_SIZE = 2
     bot.map_config(config, @config)
   end
 
@@ -54,8 +54,8 @@ class VoiceFeatures < BotFeature
       end
 
       # Clear
-      if $voice_queue.has_key? event.server
-        $voice_queue[event.server].clear
+      if @voice_queue.has_key? event.server
+        @voice_queue[event.server].clear
       end
     end
 
@@ -85,9 +85,9 @@ class VoiceFeatures < BotFeature
   # Called every second by rufus to process our voice queue.
   # If the bot isn't speaking on a server,
   def process_voice_queue(bot)
-    return if $voice_queue.size == 0
+    return if @voice_queue.size == 0
 
-    $voice_queue.each do |k,v|
+    @voice_queue.each do |k,v|
       next if v.size == 0
       voice_bot = nil
       if bot.voices.has_key? k.id
@@ -147,21 +147,22 @@ class VoiceFeatures < BotFeature
     end
     filename.delete
 
-    if not $voice_queue.has_key? event.server
-      $voice_queue[event.server] = []
+    if not @voice_queue.has_key? event.server
+      @voice_queue[event.server] = []
     end
 
-    $voice_queue[event.server] << {
+    @voice_queue[event.server] << {
       file: tempfile,
       channel: event.author.voice_channel,
       volume: volume,
-      delete: true
+      delete: true,
+      owner: event.author
     }
   end
 
   # Actually send a message. Cache the mp3 in tmp.
   # TODO: make cache optional and give it a sub directory.
-  def send_message(bot, server, channel, message)
+  def send_message(bot, server, channel, user, message)
     name = Digest::SHA256.hexdigest message
     if !Dir.exists?(@config[:cache_directory])
       `mkdir -p #{@config[:cache_directory]}`
@@ -175,15 +176,19 @@ class VoiceFeatures < BotFeature
       `rm #{file}.txt`
     end
 
-    if !$voice_queue.has_key?(server)
-      $voice_queue[server] = Queue.new
+    if !@voice_queue.has_key?(server)
+      @voice_queue[server] = []
     end
 
-    return if $voice_queue[server].length >= $QUEUE_SIZE
+    if @voice_queue[server].select { |v| v[:owner] == user }.size >= @QUEUE_SIZE
+      puts "Limit reached for \"#{user.username}\" on \"#{channel}\""
+      return
+    end
 
-    $voice_queue[server] << {
+    @voice_queue[server] << {
       file: "#{file}.mp3",
-      channel: channel
+      channel: channel,
+      owner: user
     }
   end
 
@@ -194,33 +199,33 @@ class VoiceFeatures < BotFeature
   def process_voice_state(bot, server, channel, user)
     return if user.current_bot?
 
-    if !$voice.has_key? server
-      $voice[server] = {}
+    if !@voice.has_key? server
+      @voice[server] = {}
     end
 
-    if channel and !$voice[server].has_key? channel
-      $voice[server][channel] = []
+    if channel and !@voice[server].has_key? channel
+      @voice[server][channel] = []
     end
 
     name = (user.username.gsub /[0-9]+$/, "").downcase
 
-    $voice[server].each do |k,v|
+    @voice[server].each do |k,v|
       if v.include? user and k != channel
         v.delete user
-        if v.size > 1
+        if v.size >= 1
           # notify users, this isn't just an initial load.
-          send_message bot, server, k, "#{name} left"
+          send_message bot, server, k, user, "#{name} left"
         end
       end
     end
 
-    if channel and !$voice[server][channel].include? user
-      $voice[server][channel] << user
-      total_server = $voice[server].map { |l| l.size }.reduce(0, :+)
-      if total_server == 1 and $voice[server][channel].size == 1
-        send_message bot, server, channel, "You look nice today, #{name}"
-      elsif $voice[server][channel].length >= 2
-        send_message bot, server, channel, "#{name} joined"
+    if channel and !@voice[server][channel].include? user
+      @voice[server][channel] << user
+      total_server = @voice[server].map { |l| l.size }.reduce(0, :+)
+      if total_server == 1 and @voice[server][channel].size == 1
+        send_message bot, server, channel, user, "You look nice today, #{name}"
+      elsif @voice[server][channel].length >= 2
+        send_message bot, server, channel, user, "#{name} joined"
       end
      end
   end
