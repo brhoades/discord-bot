@@ -18,12 +18,12 @@ module VoiceEntryPoints
     end
 
     if file !~ /youtube.com/
-      play_file file, volume
+      play_file file, event, volume
     end
   end
 
 
-  def play_file(file, volume=@config[:default_play_volume])
+  def play_file(file, event, volume=@config[:default_play_volume])
     filename = Tempfile.new('input')
     filename.write(open(file) { |f| f.read })
     filename.close

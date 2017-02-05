@@ -68,7 +68,7 @@ class VoiceFeatures < BotFeature
       begin
         process_voice_queue bot
       rescue Exception => e
-        puts "Error in process voice queue #{e.to_s}"
+        puts "Error in process voice queue:\n#{e.to_s}"
       end
     end
   end
