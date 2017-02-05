@@ -55,8 +55,11 @@ module VoiceState
         if not @voice[server].has_key? voice_state.voice_channel
           @voice[server][voice_state.voice_channel] = []
         end
+        user = bot.users[user_id]
 
-        @voice[server][voice_state.voice_channel] << bot.users[user_id]
+        next if user.current_bot?
+
+        @voice[server][voice_state.voice_channel] << user
       end
     end
   end
