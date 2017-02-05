@@ -28,8 +28,7 @@ module VoiceState
 
     if channel and !@voice[server][channel].include? user
       @voice[server][channel] << user
-      total_server = @voice[server].map { |l| l.size }.reduce(0, :+)
-      if total_server == 1 and @voice[server][channel].size == 1
+      if @voice[server][channel].size == 1
         send_message bot, server, channel, user, "You look nice today, #{name}"
       elsif @voice[server][channel].length >= 2
         send_message bot, server, channel, user, "#{name} joined"

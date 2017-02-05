@@ -19,7 +19,7 @@ class VoiceFeatures < BotFeature
       authorized_play_users: [],
       default_play_volume: 0.1,
       default_volume: 1.0,
-      lang: 'jp'
+      lang: 'ja'
     }
 
     @voice = {}
@@ -36,7 +36,7 @@ class VoiceFeatures < BotFeature
     bot.message(contains: /^\!play .+/) do |event|
       next "!giphy unauthorized" unless authorized_user(event.author.username)
 
-      play_file event
+      play_web_address event
     end
 
     bot.message(contains: /^\!stop/) do |event|
