@@ -35,4 +35,22 @@ module VoiceState
       end
     end
   end
+
+  # On first start, for all of our servers, walk through all voice states and update
+  # users to their appropriate hashes.
+  def get_voice_state(bot)
+    bot.servers.each do |server_id, server|
+      if not @voice.has_key? server
+        @voice[server] = {}
+      end
+
+      server.voice_states.each do |user_id, voice_state|
+        if not @voice[server].has_key? voice_state.voice_channel
+          @voice[server][voice_state.voice_channel] = []
+        end
+
+        @voice[server][voice_state.voice_channel] << bot.users[user_id]
+      end
+    end
+  end
 end

@@ -6,10 +6,6 @@ require_relative 'voice_message.rb'
 
 
 module VoiceEntryPoints
-  def play_yt(event)
-
-  end
-
   def play_web_address(event)
     msg = event.message.to_s.split(/\s+/)
     file = msg[1]
@@ -30,6 +26,8 @@ module VoiceEntryPoints
   end
 
   def get_yt_video_audio(url, event=nil)
+    #TODO: not this
+
     tempfile = `tempfile -s .mp3`.gsub(/\n/, "")
     `rm -f #{tempfile}`
     command = "python3 -m youtube_dl --no-playlist --max-filesize=#{@config[:max_yt_filesize]} --audio-format mp3 --extract-audio -o \"#{tempfile}\" \"#{url}\""

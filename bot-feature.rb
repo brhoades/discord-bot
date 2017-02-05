@@ -8,6 +8,10 @@ class BotFeature
   def before_run
   end
 
+  # Ran when the bot becomes ready
+  def ready(bot, scheduler)
+  end
+
   def self.descendants
     ObjectSpace.each_object(Class).select { |klass| klass < self }
   end

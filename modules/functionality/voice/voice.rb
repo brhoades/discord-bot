@@ -19,7 +19,7 @@ class VoiceFeatures < BotFeature
       authorized_play_users: [],
       default_play_volume: 0.1,
       default_volume: 1.0,
-      lang: 'ja',
+      lang: 'en',
       max_yt_filesize: "100m"
     }
 
@@ -27,6 +27,10 @@ class VoiceFeatures < BotFeature
     @voice_queue = {}
     @QUEUE_SIZE = 2
     bot.map_config(config, @config)
+  end
+
+  def ready(bot, scheduler)
+    get_voice_state bot
   end
 
   def register_handlers(bot, scheduler)

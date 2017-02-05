@@ -31,10 +31,10 @@ module VoiceProcessing
         voice_bot.stop_playing  # if we don't stop playing, even though play_file is blocking, playing?
                                 # will continue to return true.
       rescue
-        puts "Error processing file."
+        puts "Error processing voice file #{message.file}."
       ensure
         if !@config[:cache] or message.delete?
-            `rm -f #{message.file}`
+            `rm -f \"#{message.file}\"`
         end
       end
     end

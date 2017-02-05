@@ -19,6 +19,10 @@ bot.features.map { |f| f.register_handlers(bot, scheduler) }
 
 bot.features.map { |f| f.before_run }
 
+bot.ready do |event|
+  bot.features.map { |f| f.ready(bot, scheduler) }
+end
+
 bot.run
 
 #TODO: store user stats... number of words, number of lines, images, links, most popular phrases, etc. STore it all.
