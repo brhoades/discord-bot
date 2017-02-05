@@ -1,5 +1,6 @@
 require 'digest'
 require 'open3'
+require 'pty'
 
 require_relative 'voice_message.rb'
 
@@ -17,13 +18,38 @@ module VoiceEntryPoints
       volume = msg[2]
     end
 
-    if file !~ /youtube.com/
-      play_file file, event, volume
+    # NOTE: must have youtube-dl/python3
+    if file =~ /youtube.com/i
+      filename = get_yt_video_audio file, event
+      return if not filename
+      play_file filename, event, volume
+    else
+      download_and_transcode_file file, event, volume
     end
+
   end
 
+  def get_yt_video_audio(url, event=nil)
+    tempfile = `tempfile -s .mp3`.gsub(/\n/, "")
+    `rm -f #{tempfile}`
+    command = "python3 -m youtube_dl --no-playlist --max-filesize=#{@config[:max_yt_filesize]} --audio-format mp3 --extract-audio -o \"#{tempfile}\" \"#{url}\""
+    contents = "Beginning...\n\n"
+    message = event.respond contents
+    PTY.spawn(command) do |stdout, stdin, pid|
+      begin
+        # Do stuff with the output here. Just printing to show it works
+        stdout.each do |l|
+          contents += "#{l}"
+          message.edit contents
+        end
+        message.delete
+      rescue Errno::EIO
+      end
+    end
 
-  def play_file(file, event, volume=@config[:default_play_volume])
+    tempfile
+  end
+  def download_and_transcode_file(file, event=nil, volume=nil)
     filename = Tempfile.new('input')
     filename.write(open(file) { |f| f.read })
     filename.close
@@ -39,11 +65,18 @@ module VoiceEntryPoints
     end
     filename.delete
 
+    if event and volume
+      play_file(file, event, volume)
+    end
+  end
+
+  def play_file(file, event, volume=@config[:default_play_volume])
+
     if not @voice_queue.has_key? event.server
       @voice_queue[event.server] = []
     end
 
-    message = VoiceMessage.new(event.author, event.author.voice_channel, tempfile)
+    message = VoiceMessage.new(event.author, event.author.voice_channel, file)
     message.delete = true
     message.volume = volume
 
@@ -69,7 +102,7 @@ module VoiceEntryPoints
       Open3.popen3("perl", "simple-google-tts/speak.pl", lang, "#{file}.txt", "#{file}.mp3") do |stdin, stdout, stderr, thread|
         error = stderr.read
         message = stdout.read
-        if thread.value == 0
+        if thread.value != 0
           # TODO: Billbot tries to log own DMs and enters a loop
           # user.pm "Error writing a message for you. Please report this to an admin."
           # user.pm "STDOUT\n```#{message}```"

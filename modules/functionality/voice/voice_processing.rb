@@ -26,12 +26,16 @@ module VoiceProcessing
       # Adjust volume
       voice_bot.filter_volume = message.volume
 
-      voice_bot.play_file message.file
-      voice_bot.stop_playing  # if we don't stop playing, even though play_file is blocking, playing?
-                              # will continue to return true.
-
-      if !@config[:cache] or message.delete?
-        `rm -f #{message.file}`
+      begin
+        voice_bot.play_file message.file
+        voice_bot.stop_playing  # if we don't stop playing, even though play_file is blocking, playing?
+                                # will continue to return true.
+      rescue
+        puts "Error processing file."
+      ensure
+        if !@config[:cache] or message.delete?
+            `rm -f #{message.file}`
+        end
       end
     end
   end

@@ -19,7 +19,8 @@ class VoiceFeatures < BotFeature
       authorized_play_users: [],
       default_play_volume: 0.1,
       default_volume: 1.0,
-      lang: 'ja'
+      lang: 'ja',
+      max_yt_filesize: "100m"
     }
 
     @voice = {}
