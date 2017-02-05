@@ -20,7 +20,8 @@ class VoiceFeatures < BotFeature
       default_play_volume: 0.1,
       default_volume: 1.0,
       lang: 'en',
-      max_yt_filesize: "100m"
+      max_yt_filesize: "100m",
+      custom_greetings: {}
     }
 
     @voice = {}

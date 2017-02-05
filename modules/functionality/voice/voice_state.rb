@@ -1,8 +1,6 @@
 module VoiceState
   # Called on a voice event. If it's not us, we internally
   # update our voice session tracking.
-  # TODO: do this on bot start.
-  # TODO: decouple from sending messages
   def process_voice_state(bot, server, channel, user)
     return if user.current_bot?
 
@@ -28,6 +26,15 @@ module VoiceState
 
     if channel and !@voice[server][channel].include? user
       @voice[server][channel] << user
+      if @config[:custom_greetings].has_key? name
+        greetings = @config[:custom_greetings][name]
+
+        # Seed by most recent hour
+        rng = Random.new(Time.now.to_i % 60*60)
+
+        send_message bot, server, channel, user, greetings[rng.rand(greetings.size)]
+      end
+
       if @voice[server][channel].size == 1
         send_message bot, server, channel, user, "You look nice today, #{name}"
       elsif @voice[server][channel].length >= 2
