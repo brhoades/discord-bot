@@ -30,7 +30,7 @@ module VoiceState
         greetings = @config[:custom_greetings][name]
 
         # Seed by most recent hour
-        rng = Random.new(Time.now.to_i % 60*60)
+        rng = Random.new((Time.now.to_i / 60*60).ceil)
 
         send_message bot, server, channel, user, greetings[rng.rand(greetings.size)]
       else
