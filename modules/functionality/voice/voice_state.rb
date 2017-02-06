@@ -33,12 +33,12 @@ module VoiceState
         rng = Random.new(Time.now.to_i % 60*60)
 
         send_message bot, server, channel, user, greetings[rng.rand(greetings.size)]
-      end
-
-      if @voice[server][channel].size == 1
-        send_message bot, server, channel, user, "You look nice today, #{name}"
-      elsif @voice[server][channel].length >= 2
-        send_message bot, server, channel, user, "#{name} joined"
+      else
+        if @voice[server][channel].size == 1
+          send_message bot, server, channel, user, "You look nice today, #{name}"
+        elsif @voice[server][channel].length >= 2
+          send_message bot, server, channel, user, "#{name} joined"
+        end
       end
     end
   end
