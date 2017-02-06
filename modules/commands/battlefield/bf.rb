@@ -2,6 +2,8 @@ require_relative '../../../bot-feature.rb'
 require_relative 'bf1_api.rb'
 require_relative 'basic_stats.rb'
 require_relative 'detailed_stats.rb'
+require_relative 'weapon_stats.rb'
+require_relative 'medal_stats.rb'
 
 
 class BF1TrackerFeature < BotFeature
@@ -63,6 +65,8 @@ Usage:
   end
 
   private
-  include BF1BasicStats 
-  include BF1DetailedStats 
+  include BF1BasicStats
+  include BF1DetailedStats
+  include BF1WeaponStats
+  include BF1MedalStats
 end
