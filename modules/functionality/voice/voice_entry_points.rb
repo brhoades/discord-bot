@@ -125,6 +125,8 @@ module VoiceEntryPoints
       return
     end
 
-    @voice_queue[server] << VoiceMessage.new(user, channel, "#{file}.mp3")
+    message = VoiceMessage.new(user, channel, "#{file}.mp3")
+    message.volume = 1.0
+    @voice_queue[server] << message
   end
 end
