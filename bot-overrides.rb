@@ -110,7 +110,7 @@ class Discordrb::Bot
   end
 
   def paginate_response(someresponse, takeoff=0)
-    return [someresponse] if someresponse.length < 2000
+    return [someresponse] if someresponse.length < (2000-takeoff)
 
     # Split it so our largest chunk is 1999 (-takeoff) chars
     # The last entry is blank so toss it.
