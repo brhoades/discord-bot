@@ -96,12 +96,11 @@ class Discordrb::Bot
           message = " in module #{attributes[:caller]}"
         end
 
-        message = %{Error#{message}: ```#{e.to_s}
-#{e.backtrace.join("\n")}```}
         puts message
-        event.respond(message)
-
-
+        puts e.backtrace.join("\n")
+        paginate_response(%{Error#{message}: #{e.to_s}\n\n#{e.backtrace.join("\n")}}, 9).map do |m|
+          event.respond("```#{m}```")
+        end
       end
     end
   end
@@ -116,6 +115,6 @@ class Discordrb::Bot
     # Split it so our largest chunk is 1999 (-takeoff) chars
     # The last entry is blank so toss it.
     # Regex: \s\S matches all characters including newlines.
-    return someresponse.scan(/[\s\S]{,#{1999-takeoff}}/)[0...-1]
+    someresponse.scan(/[\s\S]{,#{1999-takeoff}}/)[0...-1]
   end
 end
