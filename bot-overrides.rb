@@ -96,8 +96,6 @@ class Discordrb::Bot
           message = " in module #{attributes[:caller]}"
         end
 
-        puts message
-        puts e.backtrace.join("\n")
         paginate_response(%{Error#{message}: #{e.to_s}\n\n#{e.backtrace.join("\n")}}, 9).map do |m|
           event.respond("```#{m}```")
         end

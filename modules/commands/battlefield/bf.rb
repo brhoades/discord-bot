@@ -4,6 +4,7 @@ require_relative 'basic_stats.rb'
 require_relative 'detailed_stats.rb'
 require_relative 'weapon_stats.rb'
 require_relative 'medal_stats.rb'
+require_relative 'vehicle_stats.rb'
 
 
 class BF1TrackerFeature < BotFeature
@@ -33,6 +34,7 @@ Usage:
   !bf -kit/kits <user>: show information about a user's kits including time used.
   !bf -star/stars <user>: show weapons and their number of stars for a user (if any).
   !bf -medal/medals <user>: show medals for a user, including in progress.
+  !bf -vehicle/vehicles <user>: show vehicle statistics by type.
 }
     })
 
@@ -54,12 +56,22 @@ Usage:
       sub = message[0]
       message.delete_at 0
 
+      response = nil
       if sub =~ /kits?/
-        event.respond pretty_kit_statistics(message.join " ")
+        response = pretty_kit_statistics(message.join " ")
       elsif sub =~ /stars?/
-        event.respond get_stars_statistics(message.join " ")
+        response = get_stars_statistics(message.join " ")
       elsif sub =~ /medals?/
-        event.respond pretty_medal_statistics(message.join " ")
+        response = pretty_medal_statistics(message.join " ")
+      elsif sub =~ /vehicles?/
+        response = pretty_vehicle_statistics(bot, message.join(" "))
+      end
+
+      if response.is_a? Array
+        response.map { |m| puts m }
+        response.map { |m| event.respond m }
+      else
+        event.respond response
       end
     end
   end
@@ -69,4 +81,5 @@ Usage:
   include BF1DetailedStats
   include BF1WeaponStats
   include BF1MedalStats
+  include BF1VehicleStats
 end
