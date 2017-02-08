@@ -5,6 +5,9 @@ require_relative 'bot-overrides.rb'
 require_relative 'db-config.rb'
 
 
+$LOAD_PATH << File.expand_path(".")
+$LOAD_PATH << File.expand_path("modules")
+
 # https://discordapp.com/oauth2/authorize?client_id=251052745790849026&scope=bot&permissions=70282304
 features = []
 

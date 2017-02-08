@@ -1,4 +1,5 @@
-require_relative '../../../bot-feature.rb'
+require 'bot-feature'
+
 require_relative 'bf1_api.rb'
 require_relative 'basic_stats.rb'
 require_relative 'detailed_stats.rb'
@@ -68,7 +69,6 @@ Usage:
       end
 
       if response.is_a? Array
-        response.map { |m| puts m }
         response.map { |m| event.respond m }
       else
         event.respond response
