@@ -52,20 +52,19 @@ Usage:
       next if not handler_check event
       event.respond "Missing API key" if not @enabled
 
-      message = event.message.to_s.split(/ /)
-      message.delete_at 0
-      sub = message[0]
-      message.delete_at 0
+      args = parse_args(event.message.to_s)
 
       response = nil
-      if sub =~ /kits?/
-        response = pretty_kit_statistics(message.join " ")
-      elsif sub =~ /stars?/
-        response = get_stars_statistics(message.join " ")
-      elsif sub =~ /medals?/
-        response = pretty_medal_statistics(message.join " ")
-      elsif sub =~ /vehicles?/
-        response = pretty_vehicle_statistics(bot, message.join(" "))
+      if args[:args].has_key? "kits" or args[:args].has_key? "kit"
+        response = pretty_kit_statistics args[:target]
+      elsif args[:args].has_key? "star" or args[:args].has_key? "stars"
+        response = get_stars_statistics args[:target]
+      elsif args[:args].has_key? "medal" or args[:args].has_key? "medals"
+        response = pretty_medal_statistics args[:target]
+      elsif args[:args].has_key? "vehicle" or args[:args].has_key? "vehicles"
+        response = pretty_vehicle_statistics bot, args[:target]
+      else
+        response = "Unknown command."
       end
 
       if response.is_a? Array
