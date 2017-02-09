@@ -110,5 +110,13 @@ describe BotFeature do
       expect(args[:args]).to be_empty
       expect(args[:target]).to eq("targetword targetword2")
     end
+
+    it "should parse a target -'s inside of it" do
+      args = @feature.parse_args "!command some-target"
+
+      expect(args[:command]).to eq("command")
+      expect(args[:args]).to be_empty
+      expect(args[:target]).to eq("some-target")
+    end
   end
 end

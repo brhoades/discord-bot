@@ -49,8 +49,10 @@ module BF1VehicleStats
   end
 
   def pretty_vehicle_stars(bot, name)
+    puts name
     response = get_vehicle_statistics(name)
     return response if not response.is_a? Hash
+    return response["error"] if response.has_key? "error"
 
     res = ["**#{name}**", ""]
 

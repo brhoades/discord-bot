@@ -36,22 +36,22 @@ class BotFeature
     return ret if raw_args.size == 0
 
     args = raw_args.join " "
-    # Scrape out a target on tail of a command, as long as it's not part of a -arg=(...) or !(...).
-    target_regex = /(?:\W?\s+|^)([\s\w]+)$/
 
-    if has_target and args =~ target_regex
-      ret[:target] = $1
-    end
-
-    return ret if raw_args.size == 0
-
-    args.scan(/-(\w+)(\=\w+)?/) do |key, value|
+    argregex = /(?:\s+|^)\-{1,2}(\w+)(\=\w+)?/
+    args.scan(argregex) do |key, value|
       if value
         value.sub! /\=/, ""
       end
 
       ret[:args][key] = value
     end
+
+    args.gsub! argregex, ""
+
+    return ret if args.strip == ""
+
+    # Remainder is the target
+    ret[:target] = args.strip
 
     ret
   end
