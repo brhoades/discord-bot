@@ -13,6 +13,7 @@ class UrbanDictionaryFeature < BotFeature
       long_help: %{Urban Dictionary definition lookup for a term.
 Usage:
   **!urban** <term>: Look up a term and return the first result.
+  **!urban** -offset=#: Get the #th definition.
 }
     })
 
@@ -28,7 +29,7 @@ Usage:
 
       next "No results" if definitions.size == 0
 
-      offset = (options.dig(:args, "offset") || 1).to_i
+      offset = (options.dig(:args, "offset") || 0).to_i
       defin = definitions[offset]
 
       event.respond %{\

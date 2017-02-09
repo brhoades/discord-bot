@@ -33,14 +33,14 @@ class BF1TrackerFeature < BotFeature
 Usage:
   !bf <user>: show basic user information.
   !bf -kit/kits <user>: show information about a user's kits including time used.
-  !bf -star/stars <user>: show weapons and their number of stars for a user (if any).
+  !bf -wstar/weaponstars <user>: show weapons and their number of stars for a user (if any).
   !bf -medal/medals <user>: show medals for a user, including in progress.
   !bf -vehicle/vehicles <user>: show vehicle statistics by type.
+  !bf -vstars/vehiclestars <user>: show vehicle stars by type.
 }
     })
 
     bot.message(contains: /^[!\/]bf1? [A-Za-z0-9]+/) do |event|
-      next if not handler_check event
       event.respond "Missing API key" if not @enabled
 
       message = event.message.to_s.split(/ /)
@@ -49,7 +49,6 @@ Usage:
     end
 
     bot.message(contains: /^[!\/]bf1? -[A-Za-z]+ [A-Za-z0-9]+/) do |event|
-      next if not handler_check event
       event.respond "Missing API key" if not @enabled
 
       args = parse_args(event.message.to_s)
@@ -57,14 +56,16 @@ Usage:
       response = nil
       if args[:args].has_key? "kits" or args[:args].has_key? "kit"
         response = pretty_kit_statistics args[:target]
-      elsif args[:args].has_key? "star" or args[:args].has_key? "stars"
+      elsif args[:args].has_key? "wstars" or args[:args].has_key? "weaponstars"
         response = get_stars_statistics args[:target]
       elsif args[:args].has_key? "medal" or args[:args].has_key? "medals"
         response = pretty_medal_statistics args[:target]
       elsif args[:args].has_key? "vehicle" or args[:args].has_key? "vehicles"
         response = pretty_vehicle_statistics bot, args[:target]
+      elsif args[:args].has_key? "vstars" or args[:args].has_key? "vehiclestars"
+        response = pretty_vehicle_stars bot, args[:target]
       else
-        response = "Unknown command."
+        response = "!help bf"
       end
 
       if response.is_a? Array
