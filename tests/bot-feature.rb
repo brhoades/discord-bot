@@ -47,7 +47,7 @@ describe BotFeature do
     end
 
     it "should parse a sole argument value pair properly with has_target=false" do
-      args = @feature.parse_args "!command -arg value", false
+      args = @feature.parse_args "!command -arg=value", false
 
       expect(args[:command]).to eq("command")
       expect(args[:args]).to eq({"arg" => "value"})
@@ -55,7 +55,7 @@ describe BotFeature do
     end
 
     it "should parse a multiple argument value pair" do
-      args = @feature.parse_args "!command -arg1 value1 -arg2 -arg3 value3", false
+      args = @feature.parse_args "!command -arg1=value1 -arg2 -arg3=value3", false
 
       expect(args[:command]).to eq("command")
       expect(args[:args]).to eq({
@@ -67,7 +67,7 @@ describe BotFeature do
     end
 
     it "should parse a mixed argument value pairs / sole argument" do
-      args = @feature.parse_args "!command -arg1 value1 -arg2 -arg3 value3 -arg4", false
+      args = @feature.parse_args "!command -arg1=value1 -arg2 -arg3=value3 -arg4", false
 
       expect(args[:command]).to eq("command")
       expect(args[:args]).to eq({
@@ -91,7 +91,7 @@ describe BotFeature do
     end
 
     it "should parse a mixed argument value pairs / sole arguments and a target" do
-      args = @feature.parse_args "!command -arg1 value1 -arg2 -arg3 value3 -arg4 target"
+      args = @feature.parse_args "!command -arg1=value1 -arg2 -arg3=value3 -arg4 target"
 
       expect(args[:command]).to eq("command")
       expect(args[:args]).to eq({
@@ -103,5 +103,12 @@ describe BotFeature do
       expect(args[:target]).to eq("target")
     end
 
+    it "should parse a target with spaces as a single target value" do
+      args = @feature.parse_args "!command targetword targetword2"
+
+      expect(args[:command]).to eq("command")
+      expect(args[:args]).to be_empty
+      expect(args[:target]).to eq("targetword targetword2")
+    end
   end
 end
