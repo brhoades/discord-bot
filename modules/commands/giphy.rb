@@ -11,7 +11,7 @@ class GiphyFeature < BotFeature
   def initialize
     @giphys = {}
     @args = {
-      
+
       toplevel: {
         random: {
           description: "Choose a random giphy. A query can be included to filter the overall pool.",
@@ -36,7 +36,19 @@ class GiphyFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
-    bot.message(contains: /^[!\/]giphy/) do |event|
+    bot.add_help({
+      command: ["giphy", "gp", "reroll"],
+      short_help: %{!giphy/!gp/!reroll: Giphy Image Search},
+      long_help: %{Giphy Image Search
+Usage:
+  **!giphy** *<tag>*: randomly look up a a Giphy filtering by a tag.
+  **NOTE: If a channel name has nsfw in it, this lookup can return unrated content.**
+  **!giphy** -exact *<query>*: look up a Giphy by a query and return the best result.
+
+  **!reroll**: reroll a random Giphy and get a fresh one.
+}
+    })
+    bot.message(contains: /^[!\/](giphy|gp)\s+/) do |event|
       parse_command event.message.to_s
       bot.db[:messages].where(discord_id: event.message.id).update(ignore: true)
 
@@ -51,7 +63,7 @@ class GiphyFeature < BotFeature
       event.message.delete
     end
 
-    bot.message(contains: /^[!\/]reroll/) do |event|
+    bot.message(contains: /^[!\/]reroll$/) do |event|
       bot.db[:messages].where(discord_id: event.message.id).update(ignore: true)
 
       author = event.message.author.username
@@ -87,10 +99,6 @@ class GiphyFeature < BotFeature
       end
     end
 
-    puts url
-    puts "args: #{args}"
-    puts "query: #{query}"
-
     url = build_url command, args, query
   end
 
@@ -107,7 +115,7 @@ class GiphyFeature < BotFeature
     url = "http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=#{message.join("+")}"
     if not nsfw
       url += "&rating=pg-13"
-    end 
+    end
 
     url = URI(url)
     response = JSON.parse(Net::HTTP.get(url))

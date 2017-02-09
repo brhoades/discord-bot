@@ -55,14 +55,34 @@ class OverwatchFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
+    bot.add_help({
+      command: ["ow", "overwatch"],
+      short_help: %{!ow/!overwatch: Overwatch details},
+      long_help: %{\
+Overwatch User Lookup:
+All commands default to us / pc / quickplay. You can change this with any command by providing:
+  -plat(form) pc/xbl/psn
+  -r(egion) us/eu/kr/cn/global
+  -m(ode) q/qp/quick/quickplay/c/cp/comp/competitive
+
+Examples
+  !ow player#159
+  !ow -r eu -plat pc -m qp
+
+---
+
+Patch notes are also available:
+  !ow -patchnotes/-pn/-patch (ptr or normal/ow)
+
+For example:
+  !ow -patchnotes  # Gives regular overwatch patchnotes
+  !ow -pn ptr      # PTR Patch Notes
+}
+    })
+
     bot.message(contains: /^\!(ow|overwatch)\s/) do |event|
       parts = event.message.to_s.split(/\s+/)
       parts.delete_at 0
-
-      if parts.size == 0
-        show_help event
-        next
-      end
 
       if parts.size >= 1 and parts[0] =~ /-(patch|p|patchnotes|pn)/
         pns = ""
@@ -139,26 +159,6 @@ class OverwatchFeature < BotFeature
   end
 
   def show_help(event)
-    event.respond %{\
-Overwatch User Lookup (!ow or !overwatch):
-All commands default to us / pc / quickplay. You can change this with any command by providing: 
-  -plat(form) pc/xbl/psn
-  -r(egion) us/eu/kr/cn/global
-  -m(ode) q/qp/quick/quickplay/c/cp/comp/competitive
-
-Examples
-  !ow player#159
-  !ow -r eu -plat pc -m qp
-
----
-
-Patch notes are also available:
-  !ow -patchnotes/-pn/-patch (ptr or normal/ow)
-
-For example:
-  !ow -patchnotes  # Gives regular overwatch patchnotes
-  !ow -pn ptr      # PTR Patch Notes
-}
   end
 
   # Run a standard profile query for a specific player

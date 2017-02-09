@@ -19,7 +19,7 @@ class HelpFeature < BotFeature
       msg.delete_at 0
 
       if msg.size == 0  # all commands
-        event.respond("**Commands**\n" + (@help.values.uniq.map { |v| "#{v[:short_help]}" }.join("\n")))
+        event.respond("**Commands**\n" + (@help.values.uniq.map { |v| "#{v[:short_help]}" }.join("\n")) + "\n\nSee **!help** <command> for more details.")
       else  # command detail
         if msg[0] =~ /\!/
           msg[0].gsub /\!/, ''

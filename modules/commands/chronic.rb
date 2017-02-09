@@ -9,6 +9,17 @@ class ChronicFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
+    bot.add_help({
+      command: ["remindme"],
+      short_help: %{!remindme: time-based reminders.},
+      long_help: %{Time-based reminders.
+Examples:
+  **!remindme** tomorrow morning to check for an email.
+  **!remindme** in three minutes to play game.
+  **!remindme** at midnight to go to bed.
+}
+    })
+
     bot.message(contains: @primary_regex) do |event|
       next if event.author.current_bot?
       if not can_create_reminder?(bot, event.message.author)
@@ -43,7 +54,7 @@ class ChronicFeature < BotFeature
       events.each do |cron|
         channel = bot.db[:channels].where(id: cron[:channel_id]).first
 
-        if channel == nil 
+        if channel == nil
           # Remove event still
           puts "Error finding channel for event."
         else

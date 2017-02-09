@@ -47,7 +47,7 @@ module Enumerable
     def standard_deviation
       return Math.sqrt(self.sample_variance)
     end
-end 
+end
 
 class BTCFeature < BotFeature
   def load(bot)
@@ -61,7 +61,18 @@ class BTCFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
-    bot.message(contains: /^\!(btc|bitcoin)/) do |event|
+    bot.add_help({
+      command: ["btc", "bitcoin"],
+      short_help: %{!bitcoin/!btc: BTC value and graphs},
+      long_help: %{BTC Statistics
+Usage:
+  !btc: Display current btc value with statistics.
+  !btc day/daily: Show the BTC price graphed for the last day.
+  !btc month/monthly: Show the BTC price graphed for the last month.
+  !btc alltime: show the BTC price graphed since records start.\
+}
+    })
+    bot.message(contains: /^\!(btc|bitcoin)(\s+|$)/) do |event|
       parts = event.message.to_s.split(/\s+/)
       parts.delete_at 0
       if parts.size == 0
@@ -183,13 +194,6 @@ class BTCFeature < BotFeature
   end
 
   def output_help(event)
-    event.respond %{
-BTC Help:
-  !btc: Display current btc value with statistics.
-  !btc day/daily: Show the BTC price graphed for the last day.
-  !btc month/monthly: Show the BTC price graphed for the last month.
-  !btc alltime: show the BTC price graphed since records start.\
-}
   end
 
   def output_value(event)
@@ -198,7 +202,7 @@ BTC Help:
     price = (1 / now["rates"]["BTC"]["rate"].to_f).round(2)
     average = daily_data.mean
     stddev = daily_data.standard_deviation
-    
+
     event.respond %{\
 BTC: $#{price}
 BTC daily avg/stddev: $#{average.round(2)} / $#{stddev.round(2)}

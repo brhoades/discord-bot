@@ -35,6 +35,19 @@ class VoiceFeatures < BotFeature
   end
 
   def register_handlers(bot, scheduler)
+    bot.add_help({
+      command: ["play", "stop", "empty"],
+      short_help: %{!stop/!play/!empty: voice channel announcements and voice sound playing.},
+      long_help: %{Discord Voice Features
+By default, this module will announce when someone enters and leaves a channel using Google's TTS engine to generate a message. This module also provides commands to empty the queue that is used to play these messages as well as add custom files to the queue.
+
+Usage:
+  **!play** <YouTube URL or direct link to sound file>: plays the media provided in the voice channel you are currently in.
+  **!stop**: stops playback if the bot is speaking and plays the next media entry in the queue (if there is one).
+  **!empty**: empties the media queue completely and halts playback.
+}
+    })
+
     bot.voice_state_update do |event|
       process_voice_state(bot, event.server, event.channel, event.user)
     end
@@ -45,7 +58,7 @@ class VoiceFeatures < BotFeature
       play_web_address event
     end
 
-    bot.message(contains: /^\!stop/) do |event|
+    bot.message(contains: /^\!stop\s/) do |event|
       next "!giphy unauthorized" unless authorized_user(event.author.username)
 
       server = event.server.id
@@ -54,7 +67,7 @@ class VoiceFeatures < BotFeature
       end
     end
 
-    bot.message(contains: /^\!empty/) do |event|
+    bot.message(contains: /^\!empty\s/) do |event|
       next "!giphy unauthorized" unless authorized_user(event.author.username)
 
       server = event.server.id

@@ -24,7 +24,16 @@ class ForecastFeature < BotFeature
   end
 
   def register_handlers(bot, scheduler)
-    bot.message(contains: /\!(forecast|weather|w)/) do |event|
+    bot.add_help({
+      command: ["forecast", "weather", "w"],
+      short_help: %{!forecast/!weather/!w: forecast.io weather and forecast.},
+      long_help: %{forecast.io weather and forecast for a particular region.
+Usage:
+  **!forecast** *<location>*: return the forecast for a provided location.
+}
+    })
+
+    bot.message(contains: /\!(forecast|weather|w)\s+/) do |event|
       next if @config[:forecast_io_key] == "" or @config[:gmaps_api_key] == ""
       parts = event.message.to_s.split(/ /)
       parts.delete_at 0
@@ -64,7 +73,7 @@ class ForecastFeature < BotFeature
       hour = forecast["hourly"]
       day = forecast["daily"]["data"][0]
 
-      response = %{Forecast for #{location.formatted_address}: 
+      response = %{Forecast for #{location.formatted_address}:
 __Temp__: #{current["temperature"]}F\
 #{" (feels like #{current["apparentTemperature"]}F)." if current["temperature"] != current["apparentTemperature"]} \
 __Low__: #{day["temperatureMin"]}F \
