@@ -1,33 +1,15 @@
+# coding: utf-8
 require 'gruff'
 require 'net/http'
 require 'uri'
 require 'json'
 require 'tempfile'
+require 'text-table'
 
-require_relative '../../bot-feature.rb'
 
-#http://blog.sgtfloyd.com/post/84242904702
-# Decorator to memoize the result of a given function
-def memoize(fn)
-  cache = {}
-  cache_timestamps = {}
-  cache_time = 10*60*60
-
-  fxn = singleton_class.instance_method(fn)
-  define_singleton_method fn do |*args|
-    # Remove stale entries
-    if cache_timestamps.inclue?(args) and cache_timestamps[args] < Time.now
-      cache_timestamps.delete args
-      cache.delete args
-    end
-
-    unless cache.include?(args)
-      cache[args] = fxn.bind(self).call(*args)
-      cache_timestamps[args] = Time.now + cache_time
-    end
-    cache[args]
-  end
-end
+require 'bot-feature.rb'
+require 'memoize.rb'
+require_relative 'exchange.rb'
 
 module Enumerable
     def sum
@@ -53,10 +35,45 @@ class BTCFeature < BotFeature
   def load(bot)
     config = bot.get_config_for_module(__FILE__)
     @config = {
+      "coinbase": {
+         "name" => "Coinbase",
+         "short" => ["cb", "coinbase"],
+         "now" => {
+           "url" => "https://api.coinbase.com/v2/prices/BTC-USD/spot",
+           "location" => ["data", "amount"]
+         },
+      },
+      "bitstamp": {
+        "name" => "Bitstamp",
+        "short" => ["bs", "bitstamp"],
+        "now" => {
+          "url" => "https://www.bitstamp.net/api/ticker/",
+          "location" => ["last"]
+        },
+         "daily_change" => {
+          "url" => "https://www.bitstamp.net/api/ticker/",
+          "location" => [["last"], ["open"]],
+          "calculate" => true
+        }
+      },
+      "bitfinex": {
+        "name" => "Bitfinex",
+        "short" => ["bitfinex", "bf"],
+        "now" => {
+          "url" => "https://api.bitfinex.com/v2/ticker/tBTCUSD",
+          "location" => [6]
+        },
+        "daily_change" => {
+          "url" => "https://api.bitfinex.com/v2/ticker/tBTCUSD",
+          "location" => [5],
+          "calculate" => false
+        }
+      }
     }
 
     bot.map_config(config, @config)
-
+    @exchanges = {}
+    @config.map { |k, e| @exchanges[e["short"]] = Exchange.new(e) }
     @location_cache = {}
   end
 
@@ -73,12 +90,16 @@ Usage:
 }
     })
     bot.message(contains: /^\!(btc|bitcoin)(\s+|$)/) do |event|
-      parts = event.message.to_s.split(/\s+/)
-      parts.delete_at 0
-      if parts.size == 0
-        output_value event
+      options = parse_args event.message.to_s
+
+      if options[:args].has_key? "ex"
+        event.respond output_value options[:args]["ex"]
+        next
+      else
+        event.respond "```markdown\n#{output_value}```"
         next
       end
+
       if parts[0] == "help"
         output_help event
         next
@@ -109,6 +130,7 @@ Usage:
   end
 
   private
+%{
   def get_graph_data(unit)
     url = case unit
       when "daily"
@@ -133,6 +155,7 @@ Usage:
       data
     end
   end
+}
 
   def get_title(unit)
     case unit
@@ -193,24 +216,42 @@ Usage:
     end
   end
 
-  def output_help(event)
-  end
+  def output_value(ex=nil)
+    if ex
+      @exchanges.each do |k, exchange|
+        if exchange.is_this_exchange? ex
+          return "$#{exchange.get_price.round(2)}/฿ (#{exchange.name})"
+        end
+      end
 
-  def output_value(event)
-    daily_data = get_graph_data("daily").map { |v| v["average"] }
-    now = get_graph_data("now")
-    price = (1 / now["rates"]["BTC"]["rate"].to_f).round(2)
-    average = daily_data.mean
-    stddev = daily_data.standard_deviation
+      return "Unknown exchange #{ex}"
+    end
 
-    event.respond %{\
-BTC: $#{price}
-BTC daily avg/stddev: $#{average.round(2)} / $#{stddev.round(2)}
-}
-  end
+    table = Text::Table.new
+    table.head = ["Exchange", "$/฿", "% Daily Change"]
+    table.rows = []
+    @exchanges.map do |k, exchange|
+      name = exchange.name
+      price = exchange.get_price
+      daily_change = nil
 
-  def finalize
-    memoize :get_graph_data
+      if exchange.get_daily_change != "?"
+        if exchange.get_daily_change >= 0
+          sym = "+"
+        else
+          sym = ""
+        end
+        daily_change = "#{sym}#{(exchange.get_daily_change*100).round(4)}%"
+      end
+
+      table.rows << [name, price, daily_change]
+    end
+
+    table.to_s
   end
 
 end
+
+exchanges_now = {
+      "coindesk": "https://api.coindesk.com/v1/bpi/currentprice.json"
+}

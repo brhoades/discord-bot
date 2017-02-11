@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'discordrb', '~>3.1.1'
+gem 'discordrb'
 gem 'mechanize', '~>2.7.5'
 gem 'giphy', '~>3.0.0'
 gem 'geocoder', '~>1.4.1'
@@ -23,3 +23,5 @@ gem 'webmock'
 gem 'reverse-markdown'
 gem 'activerecord'
 gem 'htmlentities'
+gem 'stock_quote'
+gem 'text-table'

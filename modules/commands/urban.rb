@@ -23,13 +23,19 @@ Usage:
       query = HTMLEntities.new.encode(options[:target], :basic, :named, :decimal)
 
       response = get_data "term=#{query}"
-      next response["error"] if response.has_key? "error"
+      if response["result_type"] == "no_results"
+        event.respond "No results for \"#{options[:target]}\""
+        next
+      end
 
       definitions = response["list"]
 
       next "No results" if definitions.size == 0
 
       offset = (options.dig(:args, "offset") || 0).to_i
+      if offset > definitions.size
+        offset = definitions.size - 1
+      end
       defin = definitions[offset]
 
       event.respond %{\
