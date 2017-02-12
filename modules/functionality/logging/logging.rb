@@ -9,7 +9,29 @@ class LoggingFeature < BotFeature
   def register_handlers(bot, scheduler)
     bot.message do |event|
       # Stores the message by getting it
+      # DEPRECATED
       get_message(bot, event.message, event.server)
+
+      # Active Record
+      user = User.where(discord_id: event.message.author.id).first_or_initialize
+      user.last_seen = Time.now
+      user.save
+
+      channel = Channel.where(discord_id: event.message.channel.id).first_or_initialize do |c|
+        c.save
+      end
+
+      server = Server.where(discord_id: event.message.channel.server.id).first_or_initialize do |s|
+        s.save
+      end
+
+      message = Message.new(
+        text: event.message.to_s,
+        user: user,
+        server: server,
+        channel: channel,
+        discord_id: event.message.id)
+      message.save
     end
 
     bot.message_delete do |event|

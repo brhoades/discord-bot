@@ -8,7 +8,7 @@ class Server < ActiveRecord::Base
 end
 
 class Message < ActiveRecord::Base
-  has_one :server
-  has_one :channel
-  has_one :user
+  belongs_to :server
+  belongs_to :channel
+  belongs_to :user
 end
