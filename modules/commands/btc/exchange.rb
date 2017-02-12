@@ -36,7 +36,7 @@ class Exchange
 
   # Get our daily change %
   def get_daily_change
-    return "?" if !@config.has_key? "daily_change"
+    return "---" if !@config.has_key? "daily_change"
 
     dc = @config["daily_change"]
     data = get_rest_data(dc["url"])
@@ -47,6 +47,14 @@ class Exchange
     else
       data.dig(*dc["location"])
     end
+  end
+
+  # Get volume in BTC
+  def volume
+    return "---" if !@config.has_key? "volume"
+
+    vol = @config["volume"]
+    data = get_rest_data(vol["url"]).dig(*vol["location"])
   end
 
   def get_rest_data(url)

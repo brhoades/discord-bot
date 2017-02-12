@@ -54,6 +54,10 @@ class BTCFeature < BotFeature
           "url" => "https://www.bitstamp.net/api/ticker/",
           "location" => [["last"], ["open"]],
           "calculate" => true
+        },
+        "volume" => {
+          "url" => "https://www.bitstamp.net/api/ticker/",
+          "location" => ["volume"]
         }
       },
       "bitfinex": {
@@ -67,6 +71,10 @@ class BTCFeature < BotFeature
           "url" => "https://api.bitfinex.com/v2/ticker/tBTCUSD",
           "location" => [5],
           "calculate" => false
+        },
+        "volume" => {
+          "url" => "https://api.bitfinex.com/v2/ticker/tBTCUSD",
+          "location" => [7]
         }
       }
     }
@@ -228,14 +236,15 @@ Usage:
     end
 
     table = Text::Table.new
-    table.head = ["Exchange", "$/฿", "% Daily Change"]
+    table.head = ["Exchange", "$/฿", "Change Today", "฿ Volume Today"]
     table.rows = []
     @exchanges.map do |k, exchange|
       name = exchange.name
       price = exchange.get_price
-      daily_change = nil
+      vol = exchange.volume
+      daily_change = "---"
 
-      if exchange.get_daily_change != "?"
+      if exchange.get_daily_change != "---"
         if exchange.get_daily_change >= 0
           sym = "+"
         else
@@ -244,7 +253,7 @@ Usage:
         daily_change = "#{sym}#{(exchange.get_daily_change*100).round(4)}%"
       end
 
-      table.rows << [name, price, daily_change]
+      table.rows << [name, price, daily_change, vol]
     end
 
     table.to_s
