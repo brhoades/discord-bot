@@ -58,7 +58,7 @@ Usage:
       play_web_address event
     end
 
-    bot.message(contains: /^\!stop\s/) do |event|
+    bot.message(contains: /^\!stop$/) do |event|
       next "!giphy unauthorized" unless authorized_user(event.author.username)
 
       server = event.server.id
@@ -67,7 +67,7 @@ Usage:
       end
     end
 
-    bot.message(contains: /^\!empty\s/) do |event|
+    bot.message(contains: /^\!empty$/) do |event|
       next "!giphy unauthorized" unless authorized_user(event.author.username)
 
       server = event.server.id

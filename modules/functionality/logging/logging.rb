@@ -36,8 +36,6 @@ class LoggingFeature < BotFeature
 
       bot.db[:messages].where(id: message[:id]).update(deleted: true)
 
-      return
-
       if event.channel.name.to_s == "logs" and member.current_bot?  # protect own messages
         bot.send_message(event.channel.id, message[:message])
       else
