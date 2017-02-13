@@ -1,5 +1,6 @@
-require 'rest_client'
 require 'json'
+require 'rest_client'
+require 'text-table'
 
 require 'bot-feature.rb'
 require_relative 'overwatch_api.rb'
@@ -103,6 +104,47 @@ For example:
 
       options = consume_options parts
       event.respond(run_command(bot, "profile", parts.first, options))
+    end
+
+    bot.message(contains: /^\!(owt|owtracker)\s/) do |event|
+      options = parse_args event.message.to_s
+
+      if options[:args].has_key?("add") and options[:target] != nil
+        user = get_username(bot, options[:target])
+        if user[:message] != "" and (user[:long] == nil or user[:short] == nil)
+          event.respond user[:message]
+          next
+        end
+        message = Message.ensure(event.message)
+
+        # OverwatchTrackedUser.where(name: user[:long], added_by: message.user).first_or_initialize do |u|
+        OverwatchTrackedUser.where(name: user[:long]).first_or_initialize do |u|
+          u.save!
+          event.respond("User #{user[:long]} will now have their Overwatch statistics tracked.")
+        end
+        event.respond("User #{user[:long]} is already being tracked.")
+      elsif options[:args].has_key?("list")
+        users = OverwatchTrackedUser.all
+
+        table = Text::Table.new
+        table.head = ["User", "Added On", "Records (hs)"]
+        table.rows = []
+
+        users.each do |u|
+          records = OverwatchHistory.where(tag: u.name)
+
+          # TODO: Timezone
+          table.rows << [u.name, u.created_at.getlocal.to_formatted_s(:long_ordinal), records.size]
+        end
+
+        event.respond("```\n#{table.to_s}```")
+      else
+        event.respond("!help ow")
+      end
+    end
+
+    scheduler.every '1h' do
+      # Go through tracked users and get their general stats
     end
 
     scheduler.every '15m' do

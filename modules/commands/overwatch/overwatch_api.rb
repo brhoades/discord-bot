@@ -7,6 +7,14 @@ module OverwatchAPI
   def get_username(bot, user)
     user.gsub! /#/, '-'
 
+    if user !~ /[A-Za-z]+\-[0-9]+/ and user !~ /[A-Za-z]+[0-9]*/
+      return {
+        long: nil,
+        short: nil,
+        message: "Poorly formatted user: \"#{user}\""
+      }
+    end
+
     if user =~ /\-/
       short_user = user.gsub(/-[0-9]+/, "").downcase
       owalias = OverwatchAlias.where(long: user)
