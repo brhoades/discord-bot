@@ -1,7 +1,7 @@
 require 'rest_client'
 require 'json'
 
-require_relative '../../../bot-feature.rb'
+require 'bot-feature.rb'
 require_relative 'overwatch_api.rb'
 require_relative 'basic_command.rb'
 require_relative 'patch_notes.rb'
@@ -173,7 +173,8 @@ For example:
         return "Unknown user #{user}"
       end
 
-      get_user_details user
+      %{#{user[:message]}
+#{get_user_details user[:long]}}
     end
   end
 

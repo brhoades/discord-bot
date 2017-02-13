@@ -6,32 +6,36 @@ module OverwatchAPI
 
   def get_username(bot, user)
     user.gsub! /#/, '-'
-    full_user = nil
 
     if user =~ /\-/
-      # full_user = bot.db[:overwatch].where(full_user: user).first
-      full_user = nil
-      short_user = user.gsub(/-[0-9]+/, "")
+      short_user = user.gsub(/-[0-9]+/, "").downcase
+      owalias = OverwatchAlias.where(long: user)
+      if owalias.size == 0
+        short = OverwatchAlias.where(short: short_user)
 
-      if not full_user or (full_user.is_a?(Array) and full_user.length == 0)
-        # full_user_id = bot.db[:overwatch].insert(full_user: user, short_user: short_user)
-        full_user_id = nil
+        if short.size > 0
+          short_user = "#{short_user}#{short.size}"
+        end
+        OverwatchAlias.new(long: user, short: short_user).save!
       end
 
-      return user
+      return {
+        short: short_user,
+        long: user,
+        message: "You can use the alias: #{short_user}."
+      }
     else
-      # full_user = bot.db[:overwatch].where(short_user: user).first
-      full_user = nil
+      owalias = OverwatchAlias.where(short: user.downcase).first
 
-      if not full_user or (full_user.is_a?(Array) and full_user.length == 0)
+      if not owalias
         return nil
       end
 
-      if full_user.is_a?(Array)
-        full_user.first[:full_user]
-      else
-        full_user[:full_user]
-      end
+      return {
+        long: owalias.long,
+        short: owalias.short,
+        message: ""
+      }
     end
   end
 
