@@ -50,6 +50,9 @@ Usage:
     })
     bot.message(contains: /^[!\/](giphy|gp)\s+/) do |event|
       parse_command event.message.to_s
+      message = Message.ensure(event.message)
+      message.ignore = true
+      message.save!
       bot.db[:messages].where(discord_id: event.message.id).update(ignore: true)
 
       response = get_random_url(event.message, event.message.author.username, event.channel.name =~ /nsfw/)
@@ -65,9 +68,11 @@ Usage:
 
     bot.message(contains: /^[!\/]reroll$/) do |event|
       bot.db[:messages].where(discord_id: event.message.id).update(ignore: true)
+      message = Message.ensure(event.message)
+      message.ignore = true
+      message.save!
 
       author = event.message.author.username
-      event.message.delete
       if @giphys.has_key? author
         response = get_random_url(@giphys[author][:original], author)
         $ignore << @giphys[author][:message].id
@@ -75,7 +80,13 @@ Usage:
         @giphys[author][:rerolls] += 1
         message = get_random_url(@giphys[author][:original], author, event.channel.name =~ /nsfw/, extra="(rerolls: #{@giphys[author][:rerolls]})")
         @giphys[author][:message] = event.respond(message)
+
+        response = Message.ensure(@giphys[author][:message])
+        response.ignore = true
+        response.save!
       end
+
+      event.message.delete
     end
   end
 
@@ -107,9 +118,7 @@ Usage:
   end
 
   def get_random_url(event_message, author, nsfw=false, extra="")
-    original = event_message.to_s
-    original.gsub! /\&/, ""
-    message = original.split(/ /)
+    message = event_message.to_s.dup.gsub(/\&/, "").split(/ /)
     message.delete_at 0
 
     url = "http://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=#{message.join("+")}"
@@ -124,10 +133,10 @@ Usage:
     if response["data"] and response["data"].is_a? Hash
       if response["data"].has_key?('url')
         url = response["data"]["url"]
-        "#{author}: #{original} #{extra}\n#{url}"
+        "#{author}: #{event_message.to_s} #{extra}\n#{url}"
       end
     else
-      "#{author}: #{original} (**no matches**)"
+      "#{author}: #{event_message.to_s} (**no matches**)"
     end
   end
 end
