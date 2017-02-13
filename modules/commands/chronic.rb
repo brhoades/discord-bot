@@ -1,7 +1,6 @@
 require 'chronic'
 
-require_relative '../../bot-feature.rb'
-require_relative '../../modelhandlers.rb'
+require 'bot-feature.rb'
 
 class ChronicFeature < BotFeature
   def load(bot)
@@ -47,6 +46,7 @@ Examples:
       end
     end
 
+    %{
     scheduler.every '10s' do
       events = bot.db[:chronic].where('time <= ?', Time.now).all
       next if events.length == 0
@@ -58,16 +58,18 @@ Examples:
           # Remove event still
           puts "Error finding channel for event."
         else
-          bot.send_message(channel[:discord_id], "#{cron[:target]}: #{cron[:message]}")
+          bot.send_message(channel[:discord_id], "\#{cron[:target]}:\#{cron[:message]}")
         end
 
         bot.db[:chronic].where(id: cron[:id]).delete
       end
     end
+}
   end
 
   private
-  include ModelHandlers
+  %{
+
 
   def can_create_reminder?(bot, discord_user)
     user = get_user(bot, discord_user)
@@ -89,4 +91,5 @@ Examples:
                             target: target,
                             reminder: reminder) != nil
   end
+}
 end

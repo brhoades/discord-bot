@@ -2,7 +2,7 @@ require 'forecast_io'
 require 'geocoder'
 require 'chronic_duration'
 
-require_relative '../../bot-feature.rb'
+require 'bot-feature.rb'
 
 class ForecastFeature < BotFeature
   def load(bot)
@@ -33,17 +33,16 @@ Usage:
 }
     })
 
-    bot.message(contains: /\!(forecast|weather|w)\s+/) do |event|
+    bot.message(contains: /\!(forecast|weather|w)(\s+|$)/) do |event|
       next if @config[:forecast_io_key] == "" or @config[:gmaps_api_key] == ""
-      parts = event.message.to_s.split(/ /)
-      parts.delete_at 0
-      query = parts.join(' ')
-      res = nil
+      options = parse_args event.message.to_s
 
-      if query =~ /^\s*$/
-        event.respond("No.")
+      if not options[:target] or options[:target] =~ /^\s*$/
+        event.respond("!giphy no")
         next
       end
+
+      query = options[:target]
 
       if @location_cache.has_key? query
         res = @location_cache[query]
@@ -81,8 +80,8 @@ __Low__: #{day["temperatureMin"]}F \
 | __Humidity__: #{current["humidity"]*100}% \
 | __Wind__: #{current["windSpeed"]} mph
 
-Currently #{minute["summary"].downcase.gsub(/\./, '')} with #{hour["summary"].downcase}
-#{forecast["daily"]["summary"]}\n}
+Currently #{minute&.dig("summary")&.downcase&.gsub(/\./, '')} with #{hour&.dig("summary")&.downcase}
+#{forecast&.dig("daily", "summary")}\n}
 
 
       if forecast.has_key?("alerts") and forecast["alerts"].length

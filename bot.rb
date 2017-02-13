@@ -17,7 +17,6 @@ scheduler = Rufus::Scheduler.new
 bot.features.map { |f| f.load bot }
 
 # Load modules
-
 bot.features.map { |f| f.register_handlers(bot, scheduler) }
 
 bot.features.map { |f| f.before_run }

@@ -1,17 +1,10 @@
-require 'sequel'
-
-require_relative '../../../bot-feature.rb'
-require_relative '../../../modelhandlers.rb'
+require 'bot-feature.rb'
 
 class LoggingFeature < BotFeature
-  include ModelHandlers
-
   def register_handlers(bot, scheduler)
     bot.message do |event|
       # Stores the message by getting it
       # DEPRECATED
-      get_message(bot, event.message, event.server)
-
       Message.ensure(event.message)
     end
 

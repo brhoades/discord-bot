@@ -3,7 +3,7 @@ require 'json'
 require 'sequel'
 
 class Discordrb::Bot
-  attr_accessor :db, :features
+  attr_accessor :features
   alias_method :old_message, :message
 
   # the base directory of our bot... used to get config which is in /config from bot.rb.
@@ -53,7 +53,6 @@ class Discordrb::Bot
       end
 
       bot.load_features
-      bot.setup_database
 
       bot
     end
@@ -74,15 +73,6 @@ class Discordrb::Bot
 
       puts "Loaded Feature \"#{feature_class}\""
     end
-  end
-
-  # Gets our database, assuming it has been set up properly.
-  def setup_database
-    Sequel.extension :migration
-    @db = Sequel.sqlite 'sqlite3.db'
-
-    puts "Applying migrations."
-    Sequel::Migrator.apply(@db, File.join(get_base_directory, "migrations"))
   end
 
   # Override message to simply wrap it and report back errors to the channel.

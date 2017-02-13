@@ -1,13 +1,11 @@
 require 'net/http'
 require 'json'
-require_relative '../../bot-feature.rb'
-require_relative '../../modelhandlers.rb'
+
+require 'bot-feature.rb'
 
 $ignore = []
 
 class GiphyFeature < BotFeature
-  include ModelHandlers
-
   def initialize
     @giphys = {}
     @args = {
@@ -53,7 +51,6 @@ Usage:
       message = Message.ensure(event.message)
       message.ignore = true
       message.save!
-      bot.db[:messages].where(discord_id: event.message.id).update(ignore: true)
 
       response = get_random_url(event.message, event.message.author.username, event.channel.name =~ /nsfw/)
       author = event.message.author.username
@@ -67,7 +64,6 @@ Usage:
     end
 
     bot.message(contains: /^[!\/]reroll$/) do |event|
-      bot.db[:messages].where(discord_id: event.message.id).update(ignore: true)
       message = Message.ensure(event.message)
       message.ignore = true
       message.save!

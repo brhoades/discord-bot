@@ -9,21 +9,24 @@ module OverwatchAPI
     full_user = nil
 
     if user =~ /\-/
-      full_user = bot.db[:overwatch].where(full_user: user).first
+      # full_user = bot.db[:overwatch].where(full_user: user).first
+      full_user = nil
       short_user = user.gsub(/-[0-9]+/, "")
 
       if not full_user or (full_user.is_a?(Array) and full_user.length == 0)
-        full_user_id = bot.db[:overwatch].insert(full_user: user, short_user: short_user)
+        # full_user_id = bot.db[:overwatch].insert(full_user: user, short_user: short_user)
+        full_user_id = nil
       end
 
       return user
     else
-      full_user = bot.db[:overwatch].where(short_user: user).first
+      # full_user = bot.db[:overwatch].where(short_user: user).first
+      full_user = nil
 
       if not full_user or (full_user.is_a?(Array) and full_user.length == 0)
         return nil
       end
-  
+
       if full_user.is_a?(Array)
         full_user.first[:full_user]
       else
