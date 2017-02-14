@@ -5,6 +5,18 @@ class BotFeature
   def load(bot)
   end
 
+  # Derived calls with its file, loads all modules in "./concerns/"
+  def load_concerns(file)
+    path = File.join(File.dirname(file), "concerns")
+
+    return if not Dir.exists? path
+
+    Dir["#{path}/*.rb"].each do |f|
+      require f
+    end
+  end
+
+
   def before_run
   end
 
