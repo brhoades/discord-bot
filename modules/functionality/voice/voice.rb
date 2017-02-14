@@ -64,7 +64,11 @@ Usage:
       server = event.server.id
       if bot.voices.has_key? server
         bot.voices[server].stop_playing true
+        event.respond("Stopped")
+        next
       end
+
+      event.respond("Not currently in a voice channel.")
     end
 
     bot.message(contains: /^\!empty$/) do |event|
@@ -75,11 +79,13 @@ Usage:
       # Stop
       if bot.voices.has_key? server
         bot.voices[server].stop_playing true
+        event.respond("Stopped")
       end
 
       # Clear
       if @voice_queue.has_key? event.server
         @voice_queue[event.server].clear
+        event.respond("Cleared")
       end
     end
 
