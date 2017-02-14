@@ -23,7 +23,7 @@ module Overwatch
       options = parse_args event.message.to_s
 
       if options[:args].has_key?("add") and options[:target] != nil
-        user = get_username(bot, options[:target])
+        user = get_username(options[:target])
         if user[:message] != "" and (user[:long] == nil or user[:short] == nil)
           event.respond user[:message]
           return
@@ -34,6 +34,7 @@ module Overwatch
         OverwatchTrackedUser.where(name: user[:long]).first_or_initialize do |u|
           u.save!
           event.respond("User #{user[:long]} will now have their Overwatch statistics tracked.")
+          return
         end
         event.respond("User #{user[:long]} is already being tracked.")
       elsif options[:args].has_key?("list")

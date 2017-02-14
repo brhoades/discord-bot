@@ -5,7 +5,7 @@ module Overwatch
   module API
     #TODO: Cache
 
-    def get_username(bot, user)
+    def get_username(user)
       user.gsub! /#/, '-'
 
       if user !~ /[A-Za-z]+\-[0-9]+/ and user !~ /[A-Za-z]+[0-9]*/

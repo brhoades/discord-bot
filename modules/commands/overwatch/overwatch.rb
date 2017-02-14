@@ -168,7 +168,7 @@ For example:
     options["tag"] = query
 
     if type == "profile"
-      user = get_username(bot, query)
+      user = get_username(query)
       if user == nil
         return "Unknown user #{user}"
       end
