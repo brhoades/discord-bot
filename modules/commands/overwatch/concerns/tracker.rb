@@ -2,6 +2,7 @@ require 'text-table'
 
 module Overwatch
   module Tracker
+    private
     def register_tracker_handlers(bot, scheduler)
       # TODO: Help
       # TODO: Admin
@@ -11,7 +12,7 @@ module Overwatch
         tracker_commands(event)
       end
 
-      scheduler.every '0 * * * *' do
+      scheduler.cron '0 * * * *' do
         tracker_schedule
       end
     end
@@ -56,6 +57,18 @@ module Overwatch
     end
 
     def tracker_schedule
+      puts "Updating tracked overwatch users..."
+      OverwatchTrackedUser.all.each do |u|
+        print "  #{u.name}:"
+        data = get_data(u.name)
+        if data.has_key? "error"
+          puts data["error"]
+          next
+        end
+
+        OverwatchHistory.new(tag: u.name, data: data).save
+        puts " DONE"
+      end
     end
   end
 end
