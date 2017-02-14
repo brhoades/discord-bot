@@ -1,5 +1,23 @@
 require 'text-table'
 
+# https://gist.github.com/henrik/146844
+class Hash
+  def deep_diff(b)
+    a = self
+    (a.keys | b.keys).inject({}) do |diff, k|
+      if a[k] != b[k]
+        if a[k].respond_to?(:deep_diff) && b[k].respond_to?(:deep_diff)
+          diff[k] = a[k].deep_diff(b[k])
+        else
+          diff[k] = [a[k], b[k]]
+        end
+      end
+      diff
+    end
+  end
+end
+
+
 module Overwatch
   module Tracker
     private
@@ -67,8 +85,31 @@ module Overwatch
           next
         end
 
-        OverwatchHistory.new(tag: u.name, data: data).save
+        # IF
+        old = OverwatchHistory.where(tag: u.name).order("created_at DESC")
+        same = false
+
+        if old.size > 0
+          old.each do |o_hist|
+            if o_hist.data == {}
+              next
+            else
+              if o_hist.data.deep_diff(data) == {}
+                same = true
+              end
+              break
+            end
+          end
+        end
+
+        if same
+          OverwatchHistory.new(tag: u.name, data: {}).save!
+        else
+          OverwatchHistory.new(tag: u.name, data: data).save!
+        end
+
         puts " DONE"
+        sleep 5
       end
     end
   end
