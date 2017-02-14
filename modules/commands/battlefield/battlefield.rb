@@ -1,18 +1,13 @@
 require 'bot-feature'
 
-require_relative 'bf1_api.rb'
-require_relative 'basic_stats.rb'
-require_relative 'detailed_stats.rb'
-require_relative 'weapon_stats.rb'
-require_relative 'medal_stats.rb'
-require_relative 'vehicle_stats.rb'
-
 
 class BF1TrackerFeature < BotFeature
   def initialize
   end
 
   def load(bot)
+    load_concerns(__FILE__)
+
     config = bot.get_config_for_module(__FILE__)
     @config = {
       "bftracker_api_key": "",
@@ -41,7 +36,7 @@ Usage:
     })
 
     bot.message(contains: /^[!\/]bf1? [A-Za-z0-9]+/) do |event|
-      event.respond "Missing API key" if not @enabled
+      next "Missing API key" if not @enabled
 
       message = event.message.to_s.split(/ /)
       message.delete_at 0
@@ -49,7 +44,7 @@ Usage:
     end
 
     bot.message(contains: /^[!\/]bf1? -[A-Za-z]+ [A-Za-z0-9]+/) do |event|
-      event.respond "Missing API key" if not @enabled
+      next "Missing API key" if not @enabled
 
       args = parse_args(event.message.to_s)
 
@@ -77,9 +72,10 @@ Usage:
   end
 
   private
-  include BF1BasicStats
-  include BF1DetailedStats
-  include BF1WeaponStats
-  include BF1MedalStats
-  include BF1VehicleStats
+  include BF1::API
+  include BF1::BasicStats
+  include BF1::DetailedStats
+  include BF1::WeaponStats
+  include BF1::MedalStats
+  include BF1::VehicleStats
 end
