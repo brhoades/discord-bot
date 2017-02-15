@@ -42,24 +42,34 @@ module Overwatch
         end
       end.reverse
     end
-
-    def get_general_stats(data)
-      return data["error"] if data.has_key?("error")
-      stats = data["us"]["stats"]
-      comp = stats["competitive"]["overall_stats"]
-
+    
+    def get_common_stats_from_data(stats)
       common_game_stats = {}
 
       # Accumulate some common values
       ["competitive", "quickplay"].each do |type|
         stats[type]["game_stats"].each do |k, v|
           if common_game_stats.has_key?(k)
-            common_game_stats[k] += v
+            if v.is_a? Float
+              common_game_stats[k] = (v + common_game_stats[k])/2
+            else
+              common_game_stats[k] += v
+            end
           else
             common_game_stats[k] = v
           end
         end
       end
+
+      return common_game_stats
+    end
+
+    def get_general_stats(data)
+      return data["error"] if data.has_key?("error")
+      stats = data["us"]["stats"]
+      comp = stats["competitive"]["overall_stats"]
+
+      common_game_stats = get_common_stats_from_data(stats)
       level = comp["level"].to_i + (comp["prestige"].to_i * 100)
 
       merged_hero_stats = combine_heroes(data["us"])

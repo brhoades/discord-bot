@@ -47,8 +47,36 @@ class OverwatchFeature < BotFeature
       "ps": "psn"
     }
 
-    @last_regular_patch = nil
-    @last_ptr_patch = nil
+    # Indicies to each graph type, by name
+    @graph_types = {
+      "playtime": {
+        "index": lambda { |stats|
+          puts get_common_stats_from_data(stats)
+          get_common_stats_from_data(stats)["time_played"]
+        },
+        "description": "Playtime in hours.",
+        "label": "playtime (hours)"
+      },
+      "level": {
+        "index": lambda { |stats|
+           comp = stats["competitive"]["overall_stats"]
+           comp["level"].to_i + comp["prestige"].to_i * 100
+          },
+        "description": "Level (+ prestiege) for this player.",
+        "label": "level"
+      },
+      "kpd": {
+        "index": lambda { |stats|
+          # Todo: average weighted by # games
+          get_common_stats_from_data(stats)["kpd"]
+        },
+        "description": "Kills per death for this player.",
+        "label": "KPD (avg)"
+      }
+    }
+
+   @last_regular_patch = nil
+   @last_ptr_patch = nil
 
     bot.map_config(config, @config)
   end

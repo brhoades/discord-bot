@@ -1,4 +1,6 @@
+require 'gruff'
 require 'text-table'
+require 'tempfile'
 
 # https://gist.github.com/henrik/146844
 class Hash
@@ -70,6 +72,36 @@ module Overwatch
         end
 
         event.respond("```\n#{table.to_s}```")
+      elsif options[:args].has_key?("graph")
+        args = options[:target].split(/\s+/)
+        if args.size != 2
+          event.respond "At least two arguments expected (graph type and argument)"
+          return
+        end
+        
+        target = get_username(args[1])
+        if target.has_key? "error"
+          event.respond target[:error]
+          return
+        end
+
+        target = target[:long]
+        file = Tempfile.new ['graph', '.png']
+        file.close
+        puts args
+
+        begin
+          err = graph_playtime(target, file, args[0])
+          if err != nil
+            event.respond err
+            return
+          end
+          file.open
+          event.channel.send_file(file)
+        ensure
+          file.close
+          file.unlink
+        end
       else
         event.respond("!help ow")
       end
@@ -111,6 +143,57 @@ module Overwatch
         puts " DONE"
         sleep 5
       end
+    end
+
+    # Returns a filename
+    # attr is an array of indicies to get in data.
+    def graph_playtime(user, file, attr)
+      if not @graph_types.has_key? attr.to_sym
+        puts @graph_types
+        return "Unknown option '#{attr}'"
+      end
+      type = @graph_types[attr.to_sym]
+
+      history = OverwatchHistory.where(tag: user)
+      graph = Gruff::Line.new
+      graph.title = "Playtime for #{user}"
+      labels = {}
+      values = []
+      label_count = 10 - 1
+
+      if history.size == 0
+        return "User has no history."
+      end
+
+      last = {}
+      history.each do |hist, i|
+        this = nil
+        labels[i] = "test"
+
+        if hist.data == {}
+          this = last
+        else
+          this = hist.data
+          last = this
+        end
+
+        data = nil
+        if type[:index].is_a? Proc
+          data = type[:index].call this["us"]["stats"]
+        else
+          data = this["us"]["stats"].dig(*type[:index])
+        end 
+        puts "DATA: #{data}"
+        values << data
+      end
+      if values.size == 0
+        return "No data for #{attr}"
+      end
+
+      graph.labels = labels
+      graph.data type[:label], values
+      graph.write(file.path)
+      return nil
     end
   end
 end
