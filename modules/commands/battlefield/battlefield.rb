@@ -18,6 +18,18 @@ class BF1TrackerFeature < BotFeature
 
     @header = {"TRN-Api-Key": @config[:bftracker_api_key]}
     @enabled = (@config[:bftracker_api_key] != "")
+
+    # Indicies to each graph type, by name
+    @graph_types = {
+      "playtime": {
+        "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
+        "index": lambda { |data|
+          data["result"]["timePlayed"]
+        },
+        "description": "Playtime in hours.",
+        "label": "playtime (hours)"
+      }
+    }
   end
 
   def register_handlers(bot, scheduler)
@@ -69,6 +81,10 @@ Usage:
         event.respond response
       end
     end
+
+    bot.message(contains: /^[!\/]bf1?t(racker)?\s+/) do |event|
+      tracker_commands event
+    end
   end
 
   private
@@ -78,4 +94,5 @@ Usage:
   include BF1::WeaponStats
   include BF1::MedalStats
   include BF1::VehicleStats
+  include BF1::Tracker
 end
