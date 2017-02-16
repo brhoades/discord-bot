@@ -67,11 +67,19 @@ class OverwatchFeature < BotFeature
       },
       "kpd": {
         "index": lambda { |stats|
-          # Todo: average weighted by # games
-          get_common_stats_from_data(stats)["kpd"]
+          puts get_common_stats_from_data(stats)["kpd"].to_f
+          get_common_stats_from_data(stats)["kpd"].to_f
         },
         "description": "Kills per death for this player.",
         "label": "KPD (avg)"
+      },
+      "rank": {
+        "index": lambda { |stats|
+          comp = stats["competitive"]["overall_stats"]
+          comp["comprank"]
+        },
+        "description": "Competitive rank for this player.",
+        "label": "Competitive Rank"
       }
     }
 

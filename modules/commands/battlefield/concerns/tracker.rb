@@ -26,18 +26,16 @@ module BF1
       # TODO: Help
       # TODO: Admin
       # TODO: Customizeable frequency
-
       bot.message(contains: /^\!(bft|bftracker)\s/) do |event|
         tracker_commands(event)
       end
 
-      scheduler.cron '1 * * * *' do
+      scheduler.cron '5 * * * *' do
         tracker_schedule
       end
+
     end
 
-    # Register !bft -add
-    # and !bft -list
     def tracker_commands(event)
       options = parse_args event.message.to_s
 
@@ -98,7 +96,7 @@ module BF1
       elsif options[:args].has_key?("update")
         tracker_schedule
       else
-        event.respond("!help bf")
+        event.respond("!help bft")
       end
     end
 
@@ -163,19 +161,26 @@ module BF1
 
       history = BattlefieldHistory.where(tag: user, data_type: type[:data_type])
       graph = Gruff::Line.new
-      graph.title = type[:description]
+      graph.title = type[:description].gsub(/(a )?player\.?|\.$/, user)
       labels = {}
       values = []
-      label_count = 10 - 1
+      label_count = 3
 
       if history.size == 0
         return "User has no history."
       end
+      label_spacing = (history.size / label_count).floor
+      if label_spacing == 0
+        label_spacing = 1
+      end
 
       last = {}
-      history.each do |hist, i|
+      history.each_with_index do |hist, i|
         this = nil
-        labels[i] = "test"
+
+        if i % label_spacing == 0 or i + 1 == history.size
+          labels[i] = hist.created_at.getlocal
+        end
 
         if hist.data == {}
           this = last
@@ -188,7 +193,7 @@ module BF1
         if type[:index].is_a? Proc
           data = type[:index].call this
         else
-          data = this["us"]["stats"].dig(*type[:index])
+          data = this.dig(*type[:index])
         end 
         values << data
       end

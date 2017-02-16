@@ -23,12 +23,34 @@ class BF1TrackerFeature < BotFeature
     @graph_types = {
       "playtime": {
         "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
-        "index": lambda { |data|
-          data["result"]["timePlayed"]
-        },
-        "description": "Playtime in hours.",
+        "index": ["result", "timePlayed"],
+        "description": "Playtime in hours for a player.",
         "label": "playtime (hours)"
-      }
+      },
+      "kills": {
+        "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
+        "index": ["result", "kills"],
+        "description": "Kills for a player.",
+        "label": "kills"
+      },
+      "deaths": {
+        "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
+        "index": ["result", "deaths"],
+        "description": "Deaths for a player.",
+        "label": "deaths"
+      },
+      "xp": {
+        "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
+        "index": ["result", "rankProgress", "current"],
+        "description": "XP towards a player's next level.",
+        "label": "xp"
+      },
+      "kpm": {
+        "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
+        "index": ["result", "kpm"],
+        "description": "Kills per minute for a player.",
+        "label": "xp"
+      },
     }
   end
 
@@ -46,6 +68,19 @@ Usage:
   !bf -vstars/vehiclestars <user>: show vehicle stars by type.
 }
     })
+
+    bot.add_help({
+      command: ["bft", "bftracker"],
+      short_help: %{!bft/!bftracker: Battlefield 1 tracking},
+      long_help: %{Battlefield 1 Tracking
+Usage:
+  !bft -list: list all users that are tracked.
+  !bft -add <user>: add a user to be tracked.
+  !bft -graph <attribute> <user>: graph a specific attribute for a user.
+
+Attributes:
+  } + @graph_types.map { |name, v| "#{name}: #{v[:description]}" }.join("\n  ")
+})
 
     bot.message(contains: /^[!\/]bf1? [A-Za-z0-9]+/) do |event|
       next "Missing API key" if not @enabled
