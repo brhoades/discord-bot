@@ -33,7 +33,11 @@ module Overwatch
       end
 
       scheduler.cron '0 * * * *' do
-        tracker_schedule
+        begin
+          tracker_schedule
+        rescue Exception => e
+          puts %{Error: #{e.to_s}\n\n#{e.backtrace.join("\n")}}
+        end
       end
     end
 

@@ -67,24 +67,13 @@ class OverwatchFeature < BotFeature
       },
       "kpd": {
         "index": lambda { |stats|
-          puts get_common_stats_from_data(stats)["kpd"].to_f
-          get_common_stats_from_data(stats)["kpd"].to_f
+          # Todo: average weighted by # games
+          get_common_stats_from_data(stats)["kpd"]
         },
         "description": "Kills per death for this player.",
         "label": "KPD (avg)"
-      },
-      "rank": {
-        "index": lambda { |stats|
-          comp = stats["competitive"]["overall_stats"]
-          comp["comprank"]
-        },
-        "description": "Competitive rank for this player.",
-        "label": "Competitive Rank"
       }
     }
-
-   @last_regular_patch = nil
-   @last_ptr_patch = nil
 
     bot.map_config(config, @config)
   end
@@ -140,32 +129,6 @@ For example:
 
       options = consume_options parts
       event.respond(run_command(bot, "profile", parts.first, options))
-    end
-
-
-    scheduler.every '15m' do
-      current_pns = get_ow_pns
-
-      if current_pns != @last_regular_patch
-        # Restart?
-        if @last_regular_patch != nil
-          dispatch_message(bot, current_pns)
-        end
-
-        @last_regular_patch = current_pns
-      end
-    end
-
-    scheduler.every '20m' do
-      current_ptr_pns = get_ptr_pns
-      if current_ptr_pns != @last_ptr_patch
-        # Restart?
-        if @last_ptr_patch != nil
-          dispatch_message(bot, current_ptr_pns)
-        end
-
-        @last_ptr_patch = current_ptr_pns
-      end
     end
   end
 

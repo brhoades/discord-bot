@@ -25,31 +25,36 @@ class BF1TrackerFeature < BotFeature
         "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
         "index": ["result", "timePlayed"],
         "description": "Playtime in hours for a player.",
-        "label": "playtime (hours)"
+        "label": "playtime (hours)",
+        "title": "{}'s playtime in hours",
       },
       "kills": {
         "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
         "index": ["result", "kills"],
         "description": "Kills for a player.",
-        "label": "kills"
+        "label": "kills",
+        "title": "{}'s kills",
       },
       "deaths": {
         "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
         "index": ["result", "deaths"],
         "description": "Deaths for a player.",
-        "label": "deaths"
+        "label": "deaths",
+        "title": "{}'s deaths",
       },
       "xp": {
         "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
         "index": ["result", "rankProgress", "current"],
-        "description": "XP towards a player's next level.",
-        "label": "xp"
+        "description": "XP towards a player's level.",
+        "label": "xp",
+        "title": "XP towards {}'s next level",
       },
       "kpm": {
         "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
         "index": ["result", "kpm"],
         "description": "Kills per minute for a player.",
-        "label": "xp"
+        "label": "xp",
+        "title": "Kills per minute for {}",
       },
     }
   end

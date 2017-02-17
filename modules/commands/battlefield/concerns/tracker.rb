@@ -2,6 +2,9 @@ require 'gruff'
 require 'text-table'
 require 'tempfile'
 
+require 'graph'
+require 'history_tracker'
+
 # https://gist.github.com/henrik/146844
 class Hash
   def deep_diff(b)
@@ -22,6 +25,8 @@ end
 
 module BF1
   module Tracker
+    include Common::Graph
+    include Common::HistoryTracker
     def register_tracker_handlers(bot, scheduler)
       # TODO: Help
       # TODO: Admin
@@ -31,9 +36,12 @@ module BF1
       end
 
       scheduler.cron '5 * * * *' do
-        tracker_schedule
+        begin
+          tracker_schedule
+        rescue Exception => e
+          puts %{Error: #{e.to_s}\n\n#{e.backtrace.join("\n")}}
+        end
       end
-
     end
 
     def tracker_commands(event)
@@ -76,17 +84,22 @@ module BF1
           return
         end
         
+        attr = args[0]
         target = args[1]
 
         file = Tempfile.new ['graph', '.png']
         file.close
 
         begin
-          err = graph_playtime(target, file, args[0])
-          if err != nil
-            event.respond err
-            return
+          if not @graph_types.has_key?(attr.to_sym)
+            return "Unknown option '#{attr}'"
           end
+          # Create the graph
+          type = @graph_types[attr.to_sym]
+          graph = HistoryTrackerGraphing.new(BattlefieldHistory)
+
+          graph.graph_data_from_attr(target, type, file)
+
           file.open
           event.channel.send_file(file)
         ensure
@@ -144,67 +157,12 @@ module BF1
             BattlefieldHistory.new(tag: u.name, data: data, data_type: type_i).save!
             puts " DONE"
           end
+          sleep 3
         end
 
         puts "-> DONE"
         sleep 5
       end
-    end
-
-    # Returns a filename
-    # attr is an array of indicies to get in data.
-    def graph_playtime(user, file, attr)
-      if not @graph_types.has_key? attr.to_sym
-        return "Unknown option '#{attr}'"
-      end
-      type = @graph_types[attr.to_sym]
-
-      history = BattlefieldHistory.where(tag: user, data_type: type[:data_type])
-      graph = Gruff::Line.new
-      graph.title = type[:description].gsub(/(a )?player\.?|\.$/, user)
-      labels = {}
-      values = []
-      label_count = 3
-
-      if history.size == 0
-        return "User has no history."
-      end
-      label_spacing = (history.size / label_count).floor
-      if label_spacing == 0
-        label_spacing = 1
-      end
-
-      last = {}
-      history.each_with_index do |hist, i|
-        this = nil
-
-        if i % label_spacing == 0 or i + 1 == history.size
-          labels[i] = hist.created_at.getlocal
-        end
-
-        if hist.data == {}
-          this = last
-        else
-          this = hist.data
-          last = this
-        end
-
-        data = nil
-        if type[:index].is_a? Proc
-          data = type[:index].call this
-        else
-          data = this.dig(*type[:index])
-        end 
-        values << data
-      end
-      if values.size == 0
-        return "No data for #{attr}"
-      end
-
-      graph.labels = labels
-      graph.data type[:label], values
-      graph.write(file.path)
-      return nil
     end
   end
 end
