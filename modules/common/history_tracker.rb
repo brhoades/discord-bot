@@ -36,7 +36,7 @@ module Common
         values = [[]]
         labels = {}
         value_label = []
-        if attribute[:index].first.is_a?(Array)
+        if attribute[:index].is_a?(Array) and attribute[:index].first.is_a?(Array)
           values = attribute[:index].size.times.map { [] }
           last_processed = attribute[:index].size.times.map { nil }
         end
@@ -50,11 +50,12 @@ module Common
         end
 
         # ADD DATA
-        num_labels = 6
+        num_labels = 5
         label_count = history.size / num_labels
 
         history.each_with_index do |hist, h_i|
-          if not attribute[:index].first.is_a?(Array)
+          if attribute[:index].is_a?(Proc) or \
+            (attribute[:index].is_a?(Array) and not attribute[:index].first.is_a?(Array))
             if hist.data == {}
               values[0] << values[0].last
             else
@@ -70,7 +71,7 @@ module Common
             end
 
           end
-          if h_i % num_labels == 0 or h_i == history.size - 1
+          if h_i % label_count == 0
             labels[h_i] = hist.created_at.getlocal.strftime("%F")
           end
         end

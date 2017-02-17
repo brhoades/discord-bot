@@ -1,4 +1,3 @@
-require 'gruff'
 require 'text-table'
 require 'tempfile'
 
@@ -92,7 +91,7 @@ module BF1
 
         begin
           if not @graph_types.has_key?(attr.to_sym)
-            return "Unknown option '#{attr}'"
+            event.respond "Unknown option '#{attr}'"
           end
           # Create the graph
           type = @graph_types[attr.to_sym]

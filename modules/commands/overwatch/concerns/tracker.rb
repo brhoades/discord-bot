@@ -1,7 +1,8 @@
-require 'gruff'
 require 'text-table'
 require 'tempfile'
 
+require 'graph'
+require 'history_tracker'
 # https://gist.github.com/henrik/146844
 class Hash
   def deep_diff(b)
@@ -22,7 +23,8 @@ end
 
 module Overwatch
   module Tracker
-    private
+    include Common::Graph
+    include Common::HistoryTracker
     def register_tracker_handlers(bot, scheduler)
       # TODO: Help
       # TODO: Admin
@@ -90,16 +92,21 @@ module Overwatch
         end
 
         target = target[:long]
+        graph = HistoryTrackerGraphing.new(OverwatchHistory)
+
         file = Tempfile.new ['graph', '.png']
         file.close
-        puts args
+        attr = args[0]
+
+        if not @graph_types.has_key?(attr.to_sym)
+          event.respond "Unknown option '#{attr}'"
+        end
 
         begin
-          err = graph_playtime(target, file, args[0])
-          if err != nil
-            event.respond err
-            return
-          end
+          type = @graph_types[attr.to_sym]
+
+          graph.graph_data_from_attr(target, type, file)
+
           file.open
           event.channel.send_file(file)
         ensure
@@ -109,95 +116,6 @@ module Overwatch
       else
         event.respond("!help ow")
       end
-    end
-
-    def tracker_schedule
-      puts "Updating tracked overwatch users..."
-      OverwatchTrackedUser.all.each do |u|
-        print "  #{u.name}:"
-        data = get_data(u.name)
-        if data.has_key? "error"
-          puts data["error"]
-          next
-        end
-
-        # IF
-        old = OverwatchHistory.where(tag: u.name).order("created_at DESC")
-        same = false
-
-        if old.size > 0
-          old.each do |o_hist|
-            if o_hist.data == {}
-              next
-            else
-              if o_hist.data.deep_diff(data) == {}
-                same = true
-              end
-              break
-            end
-          end
-        end
-
-        if same
-          OverwatchHistory.new(tag: u.name, data: {}).save!
-        else
-          OverwatchHistory.new(tag: u.name, data: data).save!
-        end
-
-        puts " DONE"
-        sleep 5
-      end
-    end
-
-    # Returns a filename
-    # attr is an array of indicies to get in data.
-    def graph_playtime(user, file, attr)
-      if not @graph_types.has_key? attr.to_sym
-        puts @graph_types
-        return "Unknown option '#{attr}'"
-      end
-      type = @graph_types[attr.to_sym]
-
-      history = OverwatchHistory.where(tag: user)
-      graph = Gruff::Line.new
-      graph.title = "Playtime for #{user}"
-      labels = {}
-      values = []
-      label_count = 10 - 1
-
-      if history.size == 0
-        return "User has no history."
-      end
-
-      last = {}
-      history.each do |hist, i|
-        this = nil
-        labels[i] = "test"
-
-        if hist.data == {}
-          this = last
-        else
-          this = hist.data
-          last = this
-        end
-
-        data = nil
-        if type[:index].is_a? Proc
-          data = type[:index].call this["us"]["stats"]
-        else
-          data = this["us"]["stats"].dig(*type[:index])
-        end 
-        puts "DATA: #{data}"
-        values << data
-      end
-      if values.size == 0
-        return "No data for #{attr}"
-      end
-
-      graph.labels = labels
-      graph.data type[:label], values
-      graph.write(file.path)
-      return nil
     end
   end
 end

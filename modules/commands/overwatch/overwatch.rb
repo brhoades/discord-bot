@@ -50,28 +50,33 @@ class OverwatchFeature < BotFeature
     # Indicies to each graph type, by name
     @graph_types = {
       "playtime": {
-        "index": lambda { |stats|
-          puts get_common_stats_from_data(stats)
+        "index": lambda { |data|
+          stats = data["us"]["stats"]
           get_common_stats_from_data(stats)["time_played"]
         },
         "description": "Playtime in hours.",
-        "label": "playtime (hours)"
+        "label": "playtime (hours)",
+        "title": "{}'s playtime in hours",
       },
       "level": {
-        "index": lambda { |stats|
+        "index": lambda { |data|
+           stats = data["us"]["stats"]
            comp = stats["competitive"]["overall_stats"]
            comp["level"].to_i + comp["prestige"].to_i * 100
           },
         "description": "Level (+ prestiege) for this player.",
-        "label": "level"
+        "label": "level",
+        "title": "{}'s effective level",
       },
       "kpd": {
-        "index": lambda { |stats|
+        "index": lambda { |data|
           # Todo: average weighted by # games
+          stats = data["us"]["stats"]
           get_common_stats_from_data(stats)["kpd"]
         },
         "description": "Kills per death for this player.",
-        "label": "KPD (avg)"
+        "label": "KPD (avg)",
+        "title": "{}'s kills per death",
       }
     }
 
