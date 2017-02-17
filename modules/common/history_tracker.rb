@@ -43,14 +43,17 @@ module Common
 
         def inner_filter_data(index, data)
           if index.is_a? Proc
-            return index.call(data)
+            index.call(data)
           else
-            return data.dig(*index)
+            data.dig(*index)
           end 
         end
 
-        # TODO label
-        history.each do |hist|
+        # ADD DATA
+        num_labels = 6
+        label_count = history.size / num_labels
+
+        history.each_with_index do |hist, h_i|
           if not attribute[:index].first.is_a?(Array)
             if hist.data == {}
               values[0] << values[0].last
@@ -65,9 +68,11 @@ module Common
                 values[i] << inner_filter_data(index, hist.data)
               end
             end
-          end
 
-          print values
+          end
+          if h_i % num_labels == 0 or h_i == history.size - 1
+            labels[h_i] = hist.created_at.getlocal.strftime("%F")
+          end
         end
 
         [attribute[:title].gsub(/\{\}/, target), labels, values, [attribute[:label]]]

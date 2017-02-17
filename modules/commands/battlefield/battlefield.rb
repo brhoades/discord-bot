@@ -53,7 +53,7 @@ class BF1TrackerFeature < BotFeature
         "data_type": BattlefieldHistory::TYPE_NAMES.find_index("general"),
         "index": ["result", "kpm"],
         "description": "Kills per minute for a player.",
-        "label": "xp",
+        "label": "kpm",
         "title": "Kills per minute for {}",
       },
     }
