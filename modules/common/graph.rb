@@ -17,11 +17,12 @@ module Common
         graph = Gruff::Line.new(width)
         graph.title = title
         graph.labels = labels
-
+        graph.legend_box_size = graph.legend_font_size = 10
+        graph.colors = ["#ff0000", "#fff700", "#00ffe5", "#0022ff", "#ff00ae", "#8c4400", "#40ff8f", "#6ea629", "#23648c", "#ac80ff", "#994d4d", "#fffdbf", "#f4bfff", "#86b3ae", "#998573", "#ff7b00", "#8cff00", "#009dff", "#d500ff", "#f20000", "#75008c", "#ff4066", "#263699", "#ffbd80", "#a6538c", "#ffbfbf", "#bfe7ff", "#a6d9a3", "#7c82a6"]
         graph.hide_lines = hide_lines
         graph.hide_dots = hide_dots
 
-        value_labels.zip(values) do |label, data|
+        value_labels.zip(values).each do |label, data|
           graph.data(label, data)
         end
 

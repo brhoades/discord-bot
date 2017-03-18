@@ -19,6 +19,9 @@ class BF1TrackerFeature < BotFeature
     @header = {"TRN-Api-Key": @config[:bftracker_api_key]}
     @enabled = (@config[:bftracker_api_key] != "")
 
+    # Tracker update frequency in seconds
+    @update_frequency = 60*60
+
     # Indicies to each graph type, by name
     @graph_types = {
       "playtime": {
@@ -55,6 +58,22 @@ class BF1TrackerFeature < BotFeature
         "description": "Kills per minute for a player.",
         "label": "kpm",
         "title": "Kills per minute for {}",
+      },
+      "kit_time": {
+        "data_type": BattlefieldHistory::TYPE_NAMES.find_index("details"),
+        "index": lambda { |stats|
+          kits = stats.dig("result", "kitStats") + stats.dig("result", "vehicleStats")
+          kits.sort_by { |v| v["name"] }.map do |k|
+            (k.dig("secondsAs") or k.dig("timeSpent"))/(60*60)
+          end
+        },
+        "description": "Time for each kit.",
+        "label": lambda { |stats|
+          kits = stats.dig("result", "kitStats") + stats.dig("result", "vehicleStats")
+          kits.sort_by { |v| v["name"] }.map { |k| k["name"] }
+        },
+        "title": "Time per kit for {}",
+        "multi_series": true,
       },
     }
   end

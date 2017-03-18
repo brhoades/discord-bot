@@ -34,7 +34,7 @@ module Overwatch
         tracker_commands(event)
       end
 
-      scheduler.cron '0 * * * *' do
+      scheduler.every '5m' do
         begin
           tracker_schedule
         rescue Exception => e
@@ -86,8 +86,8 @@ module Overwatch
         end
         
         target = get_username(args[1])
-        if target.has_key? "error"
-          event.respond target[:error]
+        if not target or target.has_key?("error")
+          event.respond target[:error] if target
           return
         end
 
@@ -100,6 +100,7 @@ module Overwatch
 
         if not @graph_types.has_key?(attr.to_sym)
           event.respond "Unknown option '#{attr}'"
+          return
         end
 
         begin
@@ -113,8 +114,58 @@ module Overwatch
           file.close
           file.unlink
         end
+      elsif options[:args].has_key?("update")
+        tracker_schedule
       else
         event.respond("!help ow")
+      end
+    end
+
+    def tracker_schedule
+      puts "Updating tracked overwatch users..."
+      OverwatchTrackedUser.all.each do |u|
+        # print "  #{u.name}:"
+
+        # IF
+        old = OverwatchHistory.where(tag: u.name).order("created_at DESC")
+        same = false
+
+        if old.size > 0
+          # If it hasn't been @update_frequency since our last update, quit.
+          if old.first.created_at.to_i + @update_frequency > Time.now.to_i
+            #TODO: LOG
+            # puts " RECENT (no update)"
+            next
+          end
+        end
+        data = get_data(u.name)
+
+        if data.has_key? "error"
+          puts data["error"]
+          next
+        end
+
+        if old.size > 0
+          old.each do |o_hist|
+            if o_hist.data == {}
+              next
+            else
+              if o_hist.data.deep_diff(data) == {}
+                same = true
+              end
+              break
+            end
+          end
+        end
+
+        if same
+          OverwatchHistory.new(tag: u.name, data: {}).save!
+        else
+          OverwatchHistory.new(tag: u.name, data: data).save!
+        end
+
+        # puts " DONE"
+        sleep 5
       end
     end
   end

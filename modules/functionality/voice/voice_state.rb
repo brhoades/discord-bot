@@ -26,6 +26,7 @@ module VoiceState
 
     if channel and !@voice[server][channel].include? user
       @voice[server][channel] << user
+      puts name
       if @config[:custom_greetings].has_key? name
         greetings = @config[:custom_greetings][name]
 

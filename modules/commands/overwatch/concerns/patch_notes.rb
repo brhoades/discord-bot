@@ -12,8 +12,8 @@ module Overwatch
     end
 
     def get_raw_ow_patchnotes
-      notes = get_page("https://blizztrack.com/overwatch/patch_notes/latest")
-      notes.css('.patchnoteswrap')
+      notes = get_page("https://playoverwatch.com/en-us/game/patch-notes/pc/")
+      notes.css('.patch-notes-body').first
     end
 
     def get_raw_ptr_patchnotes

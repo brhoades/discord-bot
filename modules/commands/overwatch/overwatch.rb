@@ -47,6 +47,8 @@ class OverwatchFeature < BotFeature
       "ps": "psn"
     }
 
+    @update_frequency = 60*60
+
     # Indicies to each graph type, by name
     @graph_types = {
       "playtime": {
@@ -56,17 +58,16 @@ class OverwatchFeature < BotFeature
         },
         "description": "Playtime in hours.",
         "label": "playtime (hours)",
-        "title": "{}'s playtime in hours",
+        "title": "{}'s Playtime in Hours",
       },
       "level": {
         "index": lambda { |data|
-           stats = data["us"]["stats"]
-           comp = stats["competitive"]["overall_stats"]
+           comp = data["us"]["stats"]["competitive"]["overall_stats"]
            comp["level"].to_i + comp["prestige"].to_i * 100
           },
         "description": "Level (+ prestiege) for this player.",
         "label": "level",
-        "title": "{}'s effective level",
+        "title": "{}'s Effective Level",
       },
       "kpd": {
         "index": lambda { |data|
@@ -76,7 +77,45 @@ class OverwatchFeature < BotFeature
         },
         "description": "Kills per death for this player.",
         "label": "KPD (avg)",
-        "title": "{}'s kills per death",
+        "title": "{}'s Kills/Death",
+      },
+      "rank": {
+        "index": lambda { |data|
+          # Todo: average weighted by # games
+          comp = data["us"]["stats"]["competitive"]["overall_stats"]
+          comp["comprank"]
+        },
+        "description": "Competitive rank for a player.",
+        "label": "Competitive Rank",
+        "title": "{}'s Competitive Rank",
+      },
+      "heroplaytime": {
+        "index": lambda { |data|
+          # Todo: average weighted by # games
+          combine_heroes(data["us"])["playtime"].sort.map { |_, v| v }
+        },
+        "description": "Playtime per hero over time",
+        "label": lambda { |data|
+          combine_heroes(data["us"])["playtime"].sort.map { |k, _| k }
+        },
+        "title": "{}'s Hero Playtime (hours)",
+        "width": 800,
+        "multi_series": true,
+      },
+      "{class}_playtime": {
+        "index": lambda { |data, hero_class|
+          # Todo: average weighted by # games
+          combine_heroes(data["us"])["playtime"]
+            .select { |k, v| class_to_hero[hero_class].include?(k) }
+            .map { |_, v| v }
+        },
+        "description": "Playtime per hero over time",
+        "label": lambda { |_, hero_class|
+          class_to_hero[hero_class]
+        },
+        "title": "{}'s Hero Playtime (hours)",
+        "width": 800,
+        "multi_series": true,
       }
     }
 
@@ -142,6 +181,7 @@ For example:
   include Overwatch::General
   include Overwatch::PatchNotes
   include Overwatch::Tracker
+  # include Overwatch::CommonData
 
   # Consumes anything with -this arg and returns a dict.
   # Replaces parts with just the user query.

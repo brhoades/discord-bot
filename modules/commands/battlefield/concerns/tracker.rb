@@ -34,7 +34,7 @@ module BF1
         tracker_commands(event)
       end
 
-      scheduler.cron '5 * * * *' do
+      scheduler.every '5m' do
         begin
           tracker_schedule
         rescue Exception => e
@@ -82,7 +82,7 @@ module BF1
           event.respond "At least two arguments expected (graph type and argument)"
           return
         end
-        
+
         attr = args[0]
         target = args[1]
 
@@ -125,7 +125,7 @@ module BF1
 
     def tracker_schedule
       # By index in BattlefieldHistory::TYPE
-      puts "Updating tracked battlefield users..."
+      # puts "Updating tracked battlefield users..."
       BattlefieldTrackedUser.all.each do |u|
         puts "  #{u.name}:"
 
@@ -135,7 +135,16 @@ module BF1
           same = false
           old = BattlefieldHistory.where(tag: u.name, data_type: type_i).order("created_at DESC")
 
+          if old.size > 0
+            # If it hasn't been @update_frequency since our last update, quit.
+            if old.first.created_at.to_i + @update_frequency > Time.now.to_i
+              puts "#{old.first.created_at.to_i} + #{@update_frequency} > #{Time.now.to_i}"
+              puts " RECENT (no update)"
+              next
+            end
+          end
           data = get_data_by_index(type_i, u.name)
+
           if old.size > 0
             old.each do |o_hist|
               if o_hist.data == {}
@@ -151,16 +160,15 @@ module BF1
 
           if same
             BattlefieldHistory.new(tag: u.name, data: {}, data_type: type_i).save!
-            puts " SAME"
+            # puts " SAME"
           else
             BattlefieldHistory.new(tag: u.name, data: data, data_type: type_i).save!
-            puts " DONE"
+            # puts " DONE"
           end
           sleep 3
         end
 
-        puts "-> DONE"
-        sleep 5
+        # puts "-> DONE"
       end
     end
   end
