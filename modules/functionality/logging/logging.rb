@@ -11,8 +11,8 @@ class LoggingFeature < BotFeature
     bot.message_delete do |event|
       message = Message.where(discord_id: event.id).first
 
-      puts "\"#{message}: #{message.ignore}, #{message.text}\""
       next if not message
+      puts "\"#{message.id}: #{message.ignore}, #{message.text}\""
 
       message.reload
       message.deleted = true
@@ -28,8 +28,16 @@ class LoggingFeature < BotFeature
       channel = channel.first
       member = bot.member(event.channel.server, message.user.discord_id)
 
+      if message.text =~ /\#no(delete|rm|del)/ && !message.ignore
+        if message.text.size + member.name.size + 2 > 500 || message.text =~ /^#{member.name}:/
+          bot.send_message(event.channel.id, message.text)
+        else
+          bot.send_message(event.channel.id, "#{member.name}: #{message.text}")
+        end
+      end
+
       if event.channel.name.to_s == "logs" and member.current_bot?  # protect own messages
-        bot.send_message(event.channel.id, message[:message])
+        bot.send_message(event.channel.id, message.text)
       else
         bot.send_message(channel.id, "A message by #{member.name} was deleted in ##{event.channel.name}")
       end
