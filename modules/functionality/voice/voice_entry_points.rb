@@ -17,7 +17,10 @@ module VoiceEntryPoints
     # NOTE: must have youtube-dl/python3
     if file =~ /youtube.com/i
       filename = get_yt_video_audio file, event
-      return if not filename
+      if not filename
+        puts "No filename returned from #get_yt_video_audio"
+        return
+      end
       play_file filename, event, volume
     else
       download_and_transcode_file file, event, volume
@@ -29,8 +32,8 @@ module VoiceEntryPoints
     #TODO: not this
 
     tempfile = `tempfile -s .mp3`.gsub(/\n/, "")
-    `rm -f #{tempfile}`
-    command = "python3 -m youtube_dl --no-playlist --max-filesize=#{@config[:max_yt_filesize]} --audio-format mp3 --extract-audio -o \"#{tempfile}\" \"#{url}\""
+    system("rm -f #{tempfile}")
+    command = "python3 -m youtube_dl --no-playlist --no-progress --max-filesize=#{@config[:max_yt_filesize]} --audio-format mp3 --extract-audio -o \"#{tempfile}\" \"#{url}\""
     contents = "Beginning...\n\n"
     message = event.respond contents
     PTY.spawn(command) do |stdout, stdin, pid|
@@ -38,24 +41,36 @@ module VoiceEntryPoints
         # Do stuff with the output here. Just printing to show it works
         stdout.each do |l|
           contents += "#{l}"
-          message.edit contents
+        end
+        stderr.each do |l|
+          contents += "ERR: #{l}"
         end
         message.delete
       rescue Errno::EIO
       end
     end
+    message.edit contents
 
     tempfile
   end
   def download_and_transcode_file(file, event=nil, volume=nil)
+    contents = "Transcoding...\n\n"
+    message = event.respond contents
+
     filename = Tempfile.new('input')
     filename.write(open(file) { |f| f.read })
     filename.close
     tempfile = `tempfile -s .wav`.gsub(/\n/, "")
 
     #:TODO: popen3
-    system("ffmpeg -y -loglevel panic -i \"#{filename.path}\" \"#{tempfile}\"")
+    command = "ffmpeg -y -loglevel panic -i \"#{filename.path}\" \"#{tempfile}\""
+    contents += "\nRunning: #{command}"
+    message.edit contents
+
+    system(command)
     if $? != 0
+      contents += "\n\nError creating #{tempfile}"
+      message.edit contents
       filename.delete
       system("rm -f \"#{tempfile}\"")
       puts "Error creating #{tempfile}"
@@ -64,12 +79,17 @@ module VoiceEntryPoints
     filename.delete
 
     if event and volume
+      contents += "\nPlaying..."
+      message.edit contents
+
       play_file(file, event, volume)
+
+      contents += "\n\nDONE"
+      message.edit contents
     end
   end
 
   def play_file(file, event, volume=@config[:default_play_volume])
-
     if not @voice_queue.has_key? event.server
       @voice_queue[event.server] = []
     end

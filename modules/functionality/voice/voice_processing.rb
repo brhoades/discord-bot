@@ -27,9 +27,8 @@ module VoiceProcessing
       voice_bot.filter_volume = message.volume
 
       begin
-        voice_bot.play_file message.file
-        voice_bot.stop_playing  # if we don't stop playing, even though play_file is blocking, playing?
-                                # will continue to return true.
+        voice_bot.play_file(message.file)
+        voice_bot.destroy
       rescue
         puts "Error processing voice file #{message.file}."
       ensure

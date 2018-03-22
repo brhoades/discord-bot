@@ -1,6 +1,6 @@
 source 'https://rubygems.org'
 
-gem 'discordrb'
+gem 'discordrb', git: 'https://github.com/meew0/discordrb.git'
 gem 'mechanize', '~>2.7.5'
 gem 'giphy', '~>3.0.0'
 gem 'geocoder', '~>1.4.1'
